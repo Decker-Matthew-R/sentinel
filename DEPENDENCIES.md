@@ -9,6 +9,13 @@
 | `Microsoft.NET.Test.Sdk` | 17.12.0 | `Sentinel.Agent.Tests` | Required infrastructure for `dotnet test` | MIT |
 | `coverlet.collector` | 6.0.2 | `Sentinel.Agent.Tests` | Code coverage collection during test runs | MIT |
 
+## Rust
+
+| Crate | Version | Used in | Why | License |
+|---|---|---|---|---|
+| `slint` | 1.18.1 | `sentinel-panel` | UI framework for the panel's fullscreen dashboard | GPL v3 |
+| `slint-build` | 1.18.1 | `sentinel-panel` (build) | Compiles `.slint` UI files into Rust code at build time | GPL v3 |
+
 ## GitHub Actions
 
 | Action | Version | Used in | Why | License |
