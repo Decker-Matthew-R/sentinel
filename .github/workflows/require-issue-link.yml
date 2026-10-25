@@ -1,4 +1,4 @@
-name: Require issue link
+name: Require Issue Link
 
 on:
   pull_request:
