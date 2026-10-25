@@ -41,16 +41,16 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 **Goal:** A repo and toolchain ready to build on, with no hardware required.
 
-- Create the monorepo with the layout from `TECH_STACK.md`: README, license, `.gitignore`, `docs/` with these documents.
-- Protect `main`: changes go through PRs and CI must pass.
-- Add issue templates (Feature, Bug, Chore) and their labels.
-- Create milestones and a GitHub Project board.
-- Scaffold the `Sentinel.Agent` C# solution: builds, one passing test.
-- Scaffold the `sentinel-panel` Rust crate: builds, one passing test, Slint "hello" window runs on Windows.
-- CI: build and test the agent on Windows.
-- CI: build and test the tablet app, plus an `aarch64-unknown-linux-musl` cross-compile artifact.
-- Formatting and linting enforced in CI: `dotnet format`, `rustfmt`, `clippy`.
-- Dev setup doc: required tools and versions (.NET SDK, rustup, protoc, cross/Docker).
+- [x] Create the monorepo with the layout from `TECH_STACK.md`: README, license, `.gitignore`, `docs/` with these documents.
+- [x] Protect `main`: changes go through PRs, linear history, squash merges only.
+- [x] Add issue templates (Feature, Bug, Chore) and their labels.
+- [x] Create milestones and a GitHub Project board.
+- [ ] Scaffold the `Sentinel.Agent` C# solution: builds, one passing test.
+- [ ] Scaffold the `sentinel-panel` Rust crate: builds, one passing test, Slint "hello" window runs on Windows.
+- [ ] CI: build and test the agent on Windows.
+- [ ] CI: build and test the tablet app.
+- [ ] Formatting and linting enforced in CI: `dotnet format`, `rustfmt`, `clippy`.
+- [ ] Dev setup doc: required tools and versions (.NET SDK, rustup, protoc, cross/Docker).
 
 **Outcomes:** Clone the repo on a fresh machine, follow the setup doc, and get green builds and tests locally and in CI.
 **Learning:** Repo hygiene, GitHub Actions, cross-compilation, Rust and .NET project structure.
@@ -61,6 +61,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 - Choose and buy the tablet (Xiaomi Pad 5 or PineTab2; see `TECH_STACK.md`).
 - Unlock the bootloader if needed and flash postmarketOS.
+- CI: add an `aarch64-unknown-linux-musl` cross-compile artifact (depends on hardware choice).
 - Confirm USB networking with Windows: the tablet appears as a network adapter and responds to ping.
 - Check battery charge-limit support in Linux.
 - Measure whether the PC's USB-C port supplies enough power at the brightness you want.

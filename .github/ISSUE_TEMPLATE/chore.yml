@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Chores still need a checkable outcome. Keep them as small as features.
-        For research, set a time box and make the outcome a recorded decision.
+        For research, make the outcome a recorded decision.
 
   - type: textarea
     id: goal
@@ -30,7 +30,7 @@ body:
         - CI / CD
         - Refactor
         - Docs
-        - Research (time-boxed)
+        - Research
         - Dependency update
     validations:
       required: true
@@ -46,21 +46,14 @@ body:
     validations:
       required: true
 
-  - type: input
-    id: timebox
-    attributes:
-      label: Time box
-      description: Required for research. Stop and record what you learned when it runs out.
-      placeholder: "2 sessions"
-
   - type: dropdown
     id: size
     attributes:
       label: Size
       options:
-        - S (one session)
-        - M (2–3 sessions)
-        - L (too big, split before starting)
+        - S (small, single focus)
+        - M (a few moving parts)
+        - L (too big — split before starting)
     validations:
       required: true
 
@@ -71,7 +64,7 @@ body:
       multiple: true
       options:
         - agent (C#)
-        - tablet (Rust/Slint)
+        - panel (Rust/Slint)
         - proto
         - ci
         - docs
