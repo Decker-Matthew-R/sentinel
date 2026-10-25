@@ -1,7 +1,8 @@
-fn main() {
-    println!("Hello, world!");
-}
+slint::include_modules!();
 
+fn main() {
+    AppWindow::new().unwrap().run().unwrap();
+}
 #[cfg(test)]
 mod tests {
     #[test]
