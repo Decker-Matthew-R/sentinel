@@ -107,4 +107,6 @@ Every change goes through a pull request — squash merged with `Closes #N` in t
 
 ## License
 
-_To be decided._
+This project is licensed under the [GNU General Public License v3.0](LICENSE). See the LICENSE file for the full text.
+
+Sentinel Panel links [Slint](https://slint.dev), which is also licensed under GPL v3 for open-source use.
