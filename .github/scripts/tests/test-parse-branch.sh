@@ -21,11 +21,10 @@ check() {
     fi
 }
 
-check "chore/002-move-an-issue"  "2"
-check "feature/015-something"    "15"
-check "42-some-issue-title"      "42"
-check "main"                     ""
-check "experiment/foo"           ""
+check "42-some-issue-title"  "42"
+check "6-chore-document-branch-and-commit-conventions"  "6"
+check "main"                ""
+check "experiment/foo"      ""
 
 echo ""
 if [[ "$FAIL" -eq 0 ]]; then
