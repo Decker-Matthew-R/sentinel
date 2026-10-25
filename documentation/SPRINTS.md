@@ -45,7 +45,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] Protect `main`: changes go through PRs, linear history, squash merges only.
 - [x] Add issue templates (Feature, Bug, Chore) and their labels.
 - [x] Create milestones and a GitHub Project board.
-- [ ] Scaffold the `Sentinel.Agent` C# solution: builds, one passing test.
+- [x] Scaffold the `Sentinel.Agent` C# solution: builds, one passing test.
 - [ ] Scaffold the `sentinel-panel` Rust crate: builds, one passing test, Slint "hello" window runs on Windows.
 - [ ] CI: build and test the agent on Windows.
 - [ ] CI: build and test the tablet app.
