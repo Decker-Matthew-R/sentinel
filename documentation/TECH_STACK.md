@@ -45,6 +45,16 @@ flowchart TB
     TOOLS -.-> TABSIDE
 ```
 
+## Toolchain versions
+
+| Tool | Pinned version | Config file |
+|---|---|---|
+| .NET SDK | 9.0.306 | `global.json` (repo root) |
+| Rust | 1.99.1 | `panel/rust-toolchain.toml` |
+| Slint | 1.18.1 | `panel/Cargo.toml` |
+
+To upgrade: update the version in the config file, run a local build to verify, then open a chore PR.
+
 ## Decisions
 
 ### 1. Hardware: ARM tablet running postmarketOS
