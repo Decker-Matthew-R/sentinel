@@ -1,0 +1,24 @@
+name: Run Agent Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'agent/**'
+      - '.github/workflows/agent-tests.yml'
+  pull_request:
+    paths:
+      - 'agent/**'
+      - '.github/workflows/agent-tests.yml'
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: dotnet build agent/
+
+      - name: Test
+        run: dotnet test agent/ --no-build
