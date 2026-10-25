@@ -13,6 +13,7 @@ Sentinel sits beside your PC and shows live hardware metrics — temperatures, u
 - [Architecture](documentation/ARCHITECTURE.md): components, connection model, protocol, security, deployment
 - [Tech Stack](documentation/TECH_STACK.md): each technology choice with pros, cons, and alternatives
 - [Roadmap](documentation/SPRINTS.md): milestones from dev setup to v1.0 and beyond
+- [Dev Norms](documentation/DEV_NORMS.md): branch workflow, board automation, commit and PR conventions
 
 **On this page**
 
