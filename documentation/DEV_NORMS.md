@@ -125,6 +125,18 @@ Something broken that should work. Key fields:
 
 ---
 
+## Testing strategy
+
+**C# (agent):** Tests live in `agent/tests/`. Framework is xUnit. Run with `dotnet test agent/`. Write a failing test first, then make it pass.
+
+**Rust (panel):** Tests live inline in the same file as the code, inside a `#[cfg(test)] mod tests` block. Run with `cargo test --manifest-path panel/Cargo.toml`. Same TDD approach.
+
+**UI testing:** Slint's `slint::testing` module supports headless component testing. Deferred until M4 when view models with real logic are introduced — there is nothing meaningful to assert against pure layout code.
+
+**CI:** Both halves run automatically on PRs via `agent-tests.yml` and `panel-tests.yml`.
+
+---
+
 ## Board and PR automation
 
 The full story lifecycle is automated:

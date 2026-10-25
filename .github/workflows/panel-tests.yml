@@ -1,0 +1,33 @@
+name: Run Panel Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'panel/**'
+      - '.github/workflows/panel-tests.yml'
+  pull_request:
+    paths:
+      - 'panel/**'
+      - '.github/workflows/panel-tests.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Slint System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libfontconfig1-dev libegl-dev
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: panel
+
+      - name: Build
+        run: cargo build --manifest-path panel/Cargo.toml
+
+      - name: Test
+        run: cargo test --manifest-path panel/Cargo.toml
