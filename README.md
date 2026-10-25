@@ -103,7 +103,7 @@ Work is tracked as GitHub issues using three templates:
 - **Bug:** something broken, fixed test-first
 - **Chore:** setup, CI, tooling, refactors, docs, or research
 
-Every change goes through a pull request with green CI. Tests come first where practical.
+Every change goes through a pull request — squash merged with `Closes #N` in the description. See [Dev Norms](documentation/DEV_NORMS.md) for the full workflow.
 
 ## License
 

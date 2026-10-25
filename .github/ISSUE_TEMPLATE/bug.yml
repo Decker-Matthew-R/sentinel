@@ -63,7 +63,7 @@ body:
       multiple: true
       options:
         - agent (C#)
-        - tablet (Rust/Slint)
+        - panel (Rust/Slint)
         - proto
         - ci
         - docs

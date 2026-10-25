@@ -21,6 +21,18 @@ The automation uses a repository secret named `GH_PROJECT_AUTOMATION_TOKEN` — 
 
 ---
 
+## Main branch protection
+
+`main` is protected — you cannot push to it directly. All changes go through a pull request. The ruleset enforces:
+
+- **PRs required** — no direct pushes
+- **Linear history** — no merge commits; squash merges only
+- **No force pushes or deletions**
+
+CI status checks will also be required once they exist (issue #17).
+
+---
+
 ## Git workflow
 
 1. `git switch main && git pull`
@@ -50,6 +62,57 @@ Examples: `Chore[#002]: add branch automation`, `Feature[#023]: show CPU tempera
 ## Branch naming
 
 _To be defined in issue #6. This section will be updated when that story is complete._
+
+---
+
+## Issues and story structure
+
+All work is tracked as GitHub issues using one of three templates.
+
+### Feature
+
+A small, vertical slice of user-visible value. Key fields:
+
+| Field | What goes there |
+|---|---|
+| **User story** | Who wants this, what they want, and why — `As a / I want / so that` |
+| **Acceptance criteria** | Testable `Given / when / then` conditions — these become your first tests |
+| **Out of scope** | What this story deliberately skips — keeps the slice small |
+| **Size** | S, M, or L (see below) |
+| **Components** | Which parts of the system are touched |
+
+### Chore
+
+Setup, CI, tooling, refactors, docs, or research. Key fields:
+
+| Field | What goes there |
+|---|---|
+| **Goal** | What this unlocks for the developer — `As the developer / I want / so that` |
+| **Kind** | Category: Setup/tooling, CI/CD, Refactor, Docs, Research, Dependency update |
+| **Done when** | Concrete, checkable outcomes — the definition of done |
+| **Size** | S, M, or L (see below) |
+| **Components** | Which parts of the system are touched |
+
+### Bug
+
+Something broken that should work. Key fields:
+
+| Field | What goes there |
+|---|---|
+| **What happened** | One or two sentences describing the problem |
+| **Steps to reproduce** | Numbered steps to trigger the bug |
+| **Expected behavior** | What should have happened instead |
+| **Severity** | High (crash / data wrong / core feature unusable), Medium (degraded, workaround exists), Low (cosmetic) |
+
+### Size guide
+
+| Size | Meaning |
+|---|---|
+| S | Small, single focus |
+| M | A few moving parts |
+| L | Too big — split before starting |
+
+`L` is never the right answer. If a story is `L`, break it into smaller slices before opening the branch.
 
 ---
 
