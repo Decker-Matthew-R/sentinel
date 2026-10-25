@@ -2,9 +2,7 @@
 
 BRANCH="$1"
 
-if [[ "$BRANCH" =~ ^[a-z]+/([0-9]+)- ]]; then
-    NUM="${BASH_REMATCH[1]}"
-elif [[ "$BRANCH" =~ ^([0-9]+)- ]]; then
+if [[ "$BRANCH" =~ ^([0-9]+)- ]]; then
     NUM="${BASH_REMATCH[1]}"
 fi
 

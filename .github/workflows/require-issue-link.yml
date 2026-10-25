@@ -1,0 +1,22 @@
+name: Require issue link
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  check-issue-link:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR description for closing keyword
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if echo "$PR_BODY" | grep -iqE '(closes|fixes|resolves)[[:space:]]+#[0-9]+'; then
+            echo "Issue link found."
+          else
+            echo "PR description must include a closing keyword linking to an issue."
+            echo "Add a line like:  Closes #N"
+            echo "Accepted keywords: closes, fixes, resolves (case-insensitive)"
+            exit 1
+          fi

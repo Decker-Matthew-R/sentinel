@@ -8,14 +8,7 @@ Developer workflow, conventions, and automation for this repo.
 
 Creating a branch moves its associated issue to **In progress** on the Sentinel project board automatically. No manual card dragging needed.
 
-Two branch name formats are recognised:
-
-| Format | Example | Notes |
-|---|---|---|
-| `type/NNN-description` | `chore/003-update-docs` | Project convention |
-| `NNN-description` | `3-update-docs` | GitHub's default "Create a branch" name |
-
-Branches with no issue number (e.g. `main`, `experiment/foo`) are silently ignored.
+The branch name format `NNN-issue-title` (GitHub's default) is parsed for the issue number. Branches with no leading number (e.g. `main`, `experiment/foo`) are silently ignored.
 
 The automation uses a repository secret named `GH_PROJECT_AUTOMATION_TOKEN` — a personal access token with `repo` and `project` scopes. Never commit this token.
 
@@ -36,7 +29,7 @@ CI status checks will also be required once they exist (issue #17).
 ## Git workflow
 
 1. `git switch main && git pull`
-2. Create a branch: `git switch -c type/NNN-description`, or use **Create a branch** on the issue page then `git fetch`.
+2. Use **Create a branch** on the GitHub issue page, then `git fetch && git switch NNN-issue-title`.
 3. Commit freely on the branch.
 4. `git push -u origin <branch>`
 5. Open a PR titled `Type[#NNN]: short description` with `Closes #N` in the body.
@@ -61,7 +54,13 @@ Examples: `Chore[#002]: add branch automation`, `Feature[#023]: show CPU tempera
 
 ## Branch naming
 
-_To be defined in issue #6. This section will be updated when that story is complete._
+Always create branches using **"Create a branch"** on the GitHub issue page. This generates the branch name and links it to the issue automatically.
+
+GitHub's generated format: `NNN-issue-title` (e.g. `6-chore-document-branch-and-commit-conventions`)
+
+If you must create a branch locally, link it to the issue on GitHub before pushing — otherwise the board automation won't fire and the card won't move to In progress.
+
+> The branch automation (`move-to-in-progress.yml`) parses the leading issue number from this format. Branches with no leading number (e.g. `main`, `experiment/foo`) are silently ignored.
 
 ---
 
@@ -121,3 +120,19 @@ Something broken that should work. Key fields:
 - Title: `Type[#NNN]: short description` (matches the squash commit message)
 - Body: include `Closes #N` so merging closes the issue and moves the card to Done
 - Squash and merge only — the repo is configured to reject other merge strategies
+
+> `Closes #N` is enforced by CI (`require-issue-link.yml`) — PRs without it will fail the check. `Fixes #N` and `Resolves #N` are also accepted.
+
+---
+
+## Board and PR automation
+
+The full story lifecycle is automated:
+
+| Event | What happens |
+|---|---|
+| Branch created (`NNN-*`) | Issue card moves to **In progress** |
+| PR opened with `Closes #N` | Issue card moves to **In review** |
+| PR merged | Issue closed, card moves to **Done** |
+
+Workflows involved: `move-to-in-progress.yml`, `require-issue-link.yml`, and GitHub's built-in project workflows.
