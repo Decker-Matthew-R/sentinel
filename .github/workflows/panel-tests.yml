@@ -30,4 +30,4 @@ jobs:
         run: cargo build --manifest-path panel/Cargo.toml
 
       - name: Test
-        run: cargo test --manifest-path panel/Cargo.toml --no-build
+        run: cargo test --manifest-path panel/Cargo.toml
