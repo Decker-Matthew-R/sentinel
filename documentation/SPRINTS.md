@@ -51,7 +51,9 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] CI: build and test the agent on Windows.
 - [x] CI: build and test the tablet app.
 - [x] Pin .NET SDK and Rust toolchain versions (`global.json`, `rust-toolchain.toml`).
-- [ ] Formatting and linting enforced in CI: `dotnet format`, `rustfmt`, `clippy`.
+- [x] CI: enforce `dotnet format` on the agent.
+- [ ] CI: enforce `rustfmt` on the panel.
+- [ ] CI: enforce `clippy` on the panel.
 - [ ] Dev setup doc: required tools and versions (.NET SDK, rustup, protoc, cross/Docker).
 
 **Outcomes:** Clone the repo on a fresh machine, follow the setup doc, and get green builds and tests locally and in CI.
