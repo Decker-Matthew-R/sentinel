@@ -46,7 +46,8 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] Add issue templates (Feature, Bug, Chore) and their labels.
 - [x] Create milestones and a GitHub Project board.
 - [x] Scaffold the `Sentinel.Agent` C# solution: builds, one passing test.
-- [ ] Scaffold the `sentinel-panel` Rust crate: builds, one passing test, Slint "hello" window runs on Windows.
+- [x] Scaffold the `sentinel-panel` Rust crate: builds, one passing test.
+- [ ] Slint "hello" window runs on the device.
 - [x] CI: build and test the agent on Windows.
 - [ ] CI: build and test the tablet app.
 - [ ] Formatting and linting enforced in CI: `dotnet format`, `rustfmt`, `clippy`.
