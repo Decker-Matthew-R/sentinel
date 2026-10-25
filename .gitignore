@@ -1,0 +1,9 @@
+#IDE Configurations and Settings
+.idea
+
+#Context Documentation and Rules for AI Agents
+.context/*
+CLAUDE.md
+
+#OS Metadata
+.DS_Store

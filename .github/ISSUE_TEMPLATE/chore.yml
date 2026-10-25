@@ -1,0 +1,91 @@
+name: Chore
+description: Work that helps the developer, not the end user directly — setup, CI, tooling, refactors, docs, research.
+title: "[Chore]: "
+labels: ["chore"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Chores still need a checkable outcome. Keep them as small as features.
+        For research, set a time box and make the outcome a recorded decision.
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What this unlocks for the developer.
+      value: |
+        As the developer,
+        I want <task done>,
+        so that <what it enables>.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Setup / tooling
+        - CI / CD
+        - Refactor
+        - Docs
+        - Research (time-boxed)
+        - Dependency update
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: Concrete, checkable outcomes.
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: input
+    id: timebox
+    attributes:
+      label: Time box
+      description: Required for research. Stop and record what you learned when it runs out.
+      placeholder: "2 sessions"
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size
+      options:
+        - S (one session)
+        - M (2–3 sessions)
+        - L (too big, split before starting)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: components
+    attributes:
+      label: Components
+      multiple: true
+      options:
+        - agent (C#)
+        - tablet (Rust/Slint)
+        - proto
+        - ci
+        - docs
+        - repo
+    validations:
+      required: true
+
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      placeholder: "Blocked by #3"
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes

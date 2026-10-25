@@ -1,0 +1,109 @@
+# Sentinel
+
+**A dedicated touchscreen command panel for a Windows gaming PC.**
+
+Sentinel sits beside your PC and shows live hardware metrics — temperatures, utilization, clocks, uptime — with one-touch buttons for things like launching Steam or jumping back into your last game. It keeps that information off your main monitor, always visible at a glance.
+
+> **Status:** 🚧 Planning — Milestone 0 (dev environment and GitHub setup). Hardware choice still pending.
+
+## Index
+
+**Documentation**
+
+- [Architecture](documentation/ARCHITECTURE.md): components, connection model, protocol, security, deployment
+- [Tech Stack](documentation/TECH_STACK.md): each technology choice with pros, cons, and alternatives
+- [Roadmap](documentation/SPRINTS.md): milestones from dev setup to v1.0 and beyond
+
+**On this page**
+
+- [How it works](#how-it-works)
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Repository layout](#repository-layout)
+- [Getting started](#getting-started)
+- [Contributing workflow](#contributing-workflow)
+- [License](#license)
+
+---
+
+## How it works
+
+Sentinel has two halves connected by a single USB-C cable that carries both power and data:
+
+```mermaid
+flowchart LR
+    subgraph PC["Windows PC"]
+        agent["Sentinel Agent<br/>(C# tray app)"]
+    end
+    subgraph TAB["Tablet"]
+        panel["Sentinel Panel<br/>(Rust + Slint, fullscreen)"]
+    end
+    agent -- "metrics, game info" --> panel
+    panel -- "commands" --> agent
+```
+
+- **Sentinel Agent** runs on the PC. It reads hardware sensors, inspects the Steam library, and runs a fixed whitelist of actions.
+- **Sentinel Panel** runs on the tablet. It boots straight into a fullscreen dashboard and sends button presses back to the agent.
+- They talk over TCP using a shared Protobuf schema, through USB networking on the cable.
+
+See [Architecture](documentation/ARCHITECTURE.md) for the full design.
+
+## Features
+
+### MVP
+
+- 📊 Live hardware dashboard: CPU and GPU utilization, temperatures, clocks, power, VRAM, RAM, disk, uptime
+- 🧾 Basic system specs (CPU, GPU, RAM, OS)
+- 🎮 Launch Steam
+- ▶️ Launch your last-played game, with cover art
+
+### Planned
+
+- 🧩 Configurable launcher buttons (browser, Task Manager, Discord, …)
+- 🔊 Volume and media controls with "now playing"
+- 🌐 Network dashboard: IPs, speeds, latency, and devices on your LAN
+
+See the [Roadmap](documentation/SPRINTS.md) for the full milestone plan.
+
+## Tech stack
+
+| Area | Choice |
+|---|---|
+| PC agent | C# / .NET, LibreHardwareMonitorLib |
+| Tablet app | Rust, Slint UI (direct-to-display, no desktop environment) |
+| Tablet OS | postmarketOS (Linux) |
+| Link | USB-C power + USB networking, TCP |
+| Protocol | Length-prefixed Protobuf |
+| CI | GitHub Actions |
+
+See [Tech Stack](documentation/TECH_STACK.md) for the reasoning, trade-offs, and alternatives behind each choice.
+
+## Repository layout
+
+```
+sentinel/
+├── proto/          # sentinel.proto — shared protocol schema
+├── agent/          # Sentinel.Agent — C# solution (src/ + tests/)
+├── panel/          # sentinel-panel — Rust crate + .slint UI files
+├── tools/          # fake-agent for UI development without hardware
+├── deploy/         # init scripts, Task Scheduler config, flashing notes
+└── documentation/  # design documents
+```
+
+## Getting started
+
+_Coming in Milestone 0._ This section will cover the required tools (.NET SDK, Rust, protoc) and how to build and run both halves locally.
+
+## Contributing workflow
+
+Work is tracked as GitHub issues using three templates:
+
+- **Feature:** a small slice of value you can see or touch on the device
+- **Bug:** something broken, fixed test-first
+- **Chore:** setup, CI, tooling, refactors, docs, or research
+
+Every change goes through a pull request with green CI. Tests come first where practical.
+
+## License
+
+_To be decided._

@@ -1,0 +1,96 @@
+name: Bug
+description: Something that worked, or should work, is broken.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One bug per issue. The fix should start with a failing test that reproduces it.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: One or two sentences.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - High (crash, data wrong, or core feature unusable)
+        - Medium (feature degraded, workaround exists)
+        - Low (cosmetic or minor annoyance)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often?
+      options:
+        - Always
+        - Sometimes
+        - Once
+    validations:
+      required: true
+
+  - type: dropdown
+    id: components
+    attributes:
+      label: Components
+      multiple: true
+      options:
+        - agent (C#)
+        - tablet (Rust/Slint)
+        - proto
+        - ci
+        - docs
+        - not sure
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Agent version / commit, tablet app version / commit.
+      placeholder: "agent v0.3.1 (abc1234), tablet v0.3.0 (def5678)"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Paste relevant log lines or attach a photo of the tablet screen.
+      render: shell
+
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of done
+      description: Leave unchecked when creating; tick these off before closing.
+      options:
+        - label: Failing test reproduces the bug before the fix
+        - label: Test passes after the fix
+        - label: CI green

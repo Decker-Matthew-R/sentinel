@@ -1,0 +1,92 @@
+name: Feature
+description: A small, vertical slice of value the user can see or touch on the device.
+title: "[Feature]: "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep it lean: one slice of user-visible value, finishable in 1–3 sessions.
+        If the title needs an "and", or you have more than ~5 acceptance criteria, split it.
+
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      description: Who wants this, what they want, and why it matters.
+      value: |
+        As a <user>,
+        I want <capability>,
+        so that <benefit>.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Testable conditions. These become your first tests.
+      value: |
+        - [ ] Given <context>, when <action>, then <result>
+        - [ ] Given <context>, when <action>, then <result>
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this story deliberately does NOT do. This keeps it small.
+      placeholder: |
+        - Edge case X (follow-up story)
+        - Styling polish
+    validations:
+      required: true
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size
+      options:
+        - S (one session)
+        - M (2–3 sessions)
+        - L (too big, split before starting)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: components
+    attributes:
+      label: Components
+      multiple: true
+      options:
+        - agent (C#)
+        - tablet (Rust/Slint)
+        - proto
+        - ci
+        - docs
+    validations:
+      required: true
+
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      placeholder: "Blocked by #12, #15"
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / approach
+      description: Optional. Links, sketches, ideas. Keep it short; detail belongs in the PR.
+
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of done
+      description: Leave unchecked when creating; tick these off before closing.
+      options:
+        - label: Tests written first and passing
+        - label: CI green
+        - label: Protocol changes are backward compatible (no reused or renumbered fields)
+        - label: Docs updated if behavior or architecture changed
