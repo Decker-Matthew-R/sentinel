@@ -1,9 +1,28 @@
-#IDE Configurations and Settings
-.idea
+# IDE Configuration and Settings
+.idea/
+.vscode/
+*.user
+*.suo
+*.userprefs
 
-#Context Documentation and Rules for AI Agents
-.context/*
+# OS Metadata
+.DS_Store
+Thumbs.db
+
+# AI Agent Context and Rules
+.context/
 CLAUDE.md
 
-#OS Metadata
-.DS_Store
+# .NET Build Output
+bin/
+obj/
+*.dll
+*.exe
+
+# Rust Build Output
+target/
+
+# Secrets
+*.env
+sentinel.token
+secrets/
