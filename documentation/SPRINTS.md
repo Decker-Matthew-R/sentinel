@@ -50,6 +50,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] Slint "hello" window runs on the device.
 - [x] CI: build and test the agent on Windows.
 - [x] CI: build and test the tablet app.
+- [x] Pin .NET SDK and Rust toolchain versions (`global.json`, `rust-toolchain.toml`).
 - [ ] Formatting and linting enforced in CI: `dotnet format`, `rustfmt`, `clippy`.
 - [ ] Dev setup doc: required tools and versions (.NET SDK, rustup, protoc, cross/Docker).
 
