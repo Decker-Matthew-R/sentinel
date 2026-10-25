@@ -8,7 +8,7 @@ jobs:
   check-issue-link:
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR description for closing keyword
+      - name: Check PR Description for Closing Keyword
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
