@@ -1,3 +1,4 @@
+mod framing;
 mod proto;
 
 slint::include_modules!();
