@@ -28,7 +28,13 @@ The automation uses a repository secret named `GH_PROJECT_AUTOMATION_TOKEN` — 
 - **Linear history** — no merge commits; squash merges only
 - **No force pushes or deletions**
 
-CI status checks will also be required once they exist (issue #17).
+The following CI checks are required to pass before a PR can be merged:
+
+| Check | Workflow | What it enforces |
+|---|---|---|
+| `agent-gates` | `agent-gates.yml` | Format, build, and test the agent |
+| `panel-gates` | `panel-gates.yml` | Format, lint, build, and test the panel |
+| `Require Issue Link` | `require-issue-link.yml` | PR body contains `Closes #N` |
 
 ---
 
