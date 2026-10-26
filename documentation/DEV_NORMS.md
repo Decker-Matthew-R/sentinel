@@ -43,10 +43,11 @@ The following CI checks are required to pass before a PR can be merged:
 1. `git switch main && git pull`
 2. Use **Create a branch** on the GitHub issue page, then `git fetch && git switch NNN-issue-title`.
 3. Commit freely on the branch.
-4. `git push -u origin <branch>`
-5. Open a PR titled `Type[#NNN]: short description` with `Closes #N` in the body.
-6. **Squash and merge.** `main` gets one commit; individual commits are preserved in the PR.
-7. Clean up: `git switch main && git pull && git branch -D <branch> && git fetch --prune`
+4. Run `./scripts/ci-gates-check.sh` — auto-formats, lints, and tests both halves locally before pushing. Catches failures before they consume pipeline time.
+5. `git push -u origin <branch>`
+6. Open a PR titled `Type[#NNN]: short description` with `Closes #N` in the body.
+7. **Squash and merge.** `main` gets one commit; individual commits are preserved in the PR.
+8. Clean up: `git switch main && git pull && git branch -D <branch> && git fetch --prune`
 
 > Use `git branch -D` (force delete) rather than `-d` — Git won't recognise a squashed branch as merged.
 
@@ -145,7 +146,7 @@ Something broken that should work. Key fields:
 
 **UI testing:** Slint's `slint::testing` module supports headless component testing. Deferred until M4 when view models with real logic are introduced — there is nothing meaningful to assert against pure layout code.
 
-**CI:** Both halves run automatically on PRs via `agent-gates.yml` and `panel-gates.yml`.
+**CI:** Both halves run automatically on PRs via `agent-gates.yml` and `panel-gates.yml`. Run `./scripts/ci-gates-check.sh` locally before pushing for a faster feedback loop.
 
 ---
 
