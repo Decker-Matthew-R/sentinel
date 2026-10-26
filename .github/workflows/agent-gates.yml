@@ -8,6 +8,9 @@ on:
       - '.github/workflows/agent-gates.yml'
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   agent-gates:
     runs-on: windows-latest

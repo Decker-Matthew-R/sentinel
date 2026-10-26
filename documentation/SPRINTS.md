@@ -56,7 +56,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] CI: enforce `clippy` on the panel.
 - [x] Dev setup doc: required tools and versions (.NET SDK, rustup, protoc, cross/Docker).
 - [x] Require CI gate checks to pass before merging into main.
-- [ ] Add a local pre-push check script (`scripts/check.sh`).
+- [x] Add a local pre-push check script (`scripts/ci-gates-check.sh`).
 - [x] Add CVE dependency scanning to CI gates.
 
 **Outcomes:** Clone the repo on a fresh machine, follow the setup doc, and get green builds and tests locally and in CI.
