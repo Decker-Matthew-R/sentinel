@@ -81,12 +81,17 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 **Goal:** The thinnest possible end-to-end slice: real data, real link, real boot.
 
-- Write `proto/sentinel.proto` v1: `Envelope`, `Hello`, `Heartbeat`, `MetricsSnapshot` (uptime only).
-- Implement length-prefixed framing on both sides, test-first.
-- Agent: `LinkClient` dials the tablet with reconnect and backoff; sends uptime every second.
-- Tablet: `LinkServer` plus a minimal Slint screen showing uptime and connection state.
-- Tablet boots straight into the app via an OpenRC service.
-- Build `tools/fake-agent` for UI work without the PC agent.
+- [x] #38 — Define `proto/sentinel.proto` v1 and add codegen to both builds
+- [ ] #39 — Agent: implement length-prefixed framing
+- [ ] #40 — Panel: implement length-prefixed framing
+- [ ] #41 — Agent: `LinkClient` connects and completes the Hello handshake
+- [ ] #42 — Agent: `LinkClient` reconnects with exponential backoff
+- [ ] #43 — Panel: `LinkServer` accepts a TCP connection and decodes Hello
+- [ ] #44 — Panel: connection state machine (Waiting → Connected → Stale)
+- [ ] #45 — Build `tools/fake-agent` for UI development without hardware
+- [ ] #46 — Panel shows connection state: Waiting for PC, Connected, and Stale
+- [ ] #47 — Panel displays live uptime from the agent
+- [ ] #48 — Write and deploy the panel boot service *(hardware blocked)*
 
 **Outcomes:** Power on the tablet → it boots into the app → uptime appears and survives agent restarts.
 **Learning:** TCP sockets, framing, Protobuf codegen, async Rust, OpenRC services, deploying to an aarch64-musl target.
@@ -95,11 +100,13 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 **Goal:** All MVP metrics flow from sensors to the tablet's state store.
 
-- Agent: `SensorPoller` using LibreHardwareMonitorLib behind an `ISensorSource` interface (TDD with fakes).
-- Metrics: CPU util/temp/clock/power, GPU util/temp/hotspot/VRAM/clock/power/fan, RAM, disk, uptime.
-- `Specs` message sent once per connection.
-- Tablet: `StateStore` with ring-buffer history per metric; heartbeat-driven stale detection.
-- Agent runs as an elevated tray app started by Task Scheduler.
+- [ ] #49 — Agent: define `ISensorSource` interface and in-memory fake
+- [ ] #50 — Panel: `StateStore` stores and serves current metric values
+- [ ] #51 — Panel: `StateStore` maintains ring-buffer history per metric
+- [ ] #52 — Agent: `SensorPoller` polls `ISensorSource` and streams `MetricsSnapshot`
+- [ ] #53 — Agent: send `Specs` message once per connection
+- [ ] #54 — Agent: integrate LibreHardwareMonitorLib as the real sensor source *(hardware blocked)*
+- [ ] #55 — Configure Task Scheduler to start the agent elevated at logon *(hardware blocked)*
 
 **Outcomes:** Every metric visible (even if plainly rendered) and accurate compared with Task Manager / HWiNFO.
 **Learning:** Windows sensor access, privilege and session model, ring buffers, state machines.
@@ -108,10 +115,12 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 **Goal:** Make it beautiful and readable at a glance.
 
-- Visual design: layout, typography, color system, dark theme.
-- Tiles with sparklines; threshold colors (normal / warm / hot) in `ViewModels` (unit-tested).
-- Specs panel; "waiting for PC" and stale-data screens.
-- Rotation and brightness settings.
+- [ ] #56 — Define color system, typography, and dark theme tokens in Slint
+- [ ] #57 — Dashboard layout with metric tiles displaying live values
+- [ ] #58 — `ViewModels` compute threshold colors for metric states
+- [ ] #59 — Sparkline charts render ring-buffer history on each tile
+- [ ] #60 — Specs panel and polished connection state screens
+- [ ] #61 — Rotation and brightness settings *(hardware blocked)*
 
 **Outcomes:** A dashboard you want to look at; all connection states designed, not accidental.
 **Learning:** Slint layout and custom drawing, UI state design, separating logic from presentation.
@@ -120,11 +129,11 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 **Goal:** Launch Steam and the last-played game from the tablet.
 
-- `SteamLibrary`: locate install and library folders; write a VDF/KeyValues parser (test fixtures from real files).
-- Determine the last-played game from `localconfig.vdf`; resolve names via `appmanifest_*.acf`.
-- Load cached cover art; send it via `GameInfo` (binary payload).
-- `ActionRunner` with whitelist: `launch_steam`, `launch_last_game`; `Command` / `CommandResult` round trip.
-- Edge cases: Steam missing, not logged in, multiple accounts.
+- [ ] #62 — VDF/KeyValues parser for Steam library files
+- [ ] #63 — Agent: `ActionRunner` validates action IDs and executes whitelisted commands *(hardware blocked)*
+- [ ] #64 — Panel sends `Command` on button press and handles `CommandResult`
+- [ ] #65 — `SteamLibrary` locates install, last-played game, and app names *(hardware blocked)*
+- [ ] #66 — Load cover art as `GameInfo`, display game card, and launch last-played game *(hardware blocked)*
 
 **Outcomes:** Tap "Steam" → Steam opens. Tap the game card (with cover art) → the last game launches.
 **Learning:** File-format parsing, binary payloads over the wire, request/response correlation, safe command execution.
