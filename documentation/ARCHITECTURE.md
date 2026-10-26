@@ -128,16 +128,16 @@ The UI shows each state explicitly: a "waiting for PC" screen, a dimmed or flagg
 - **Framing:** length-prefixed Protobuf messages over TCP.
 - **Envelope:** every frame carries a protocol version and exactly one message (`oneof`).
 
-| Message | Direction | When |
-|---|---|---|
-| `Hello` | Agent → Tablet | On connect: protocol version, auth token |
-| `Capabilities` | Agent → Tablet | After handshake: features and action list the agent supports |
-| `Specs` | Agent → Tablet | Once per connection: CPU/GPU model, RAM, OS |
-| `MetricsSnapshot` | Agent → Tablet | ~1 Hz: utilization, temps, clocks, power, memory, uptime |
-| `GameInfo` | Agent → Tablet | On connect and when it changes: app ID, name, cover art bytes |
-| `Command` | Tablet → Agent | Button press: request ID + action ID |
-| `CommandResult` | Agent → Tablet | Success or error for a request ID |
-| `Heartbeat` | Both | Every second; drives stale detection |
+| Message | Direction | When | Status |
+|---|---|---|---|
+| `Hello` | Agent → Tablet | On connect: protocol version, auth token | Defined in v1 |
+| `Heartbeat` | Both | Every second; drives stale detection | Defined in v1 |
+| `MetricsSnapshot` | Agent → Tablet | ~1 Hz: utilization, temps, clocks, power, memory, uptime | Defined in v1 (uptime only — fields expand in M3) |
+| `Capabilities` | Agent → Tablet | After handshake: features and action list the agent supports | Planned (M5) |
+| `Specs` | Agent → Tablet | Once per connection: CPU/GPU model, RAM, OS | Planned (M3) |
+| `GameInfo` | Agent → Tablet | On connect and when it changes: app ID, name, cover art bytes | Planned (M5) |
+| `Command` | Tablet → Agent | Button press: request ID + action ID | Planned (M5) |
+| `CommandResult` | Agent → Tablet | Success or error for a request ID | Planned (M5) |
 
 **Compatibility rule:** never reuse or renumber Protobuf fields. New features add new messages and are announced via `Capabilities`, so older tablet builds keep working.
 

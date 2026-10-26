@@ -4,6 +4,8 @@
 
 | Package | Version | Used in | Why | License |
 |---|---|---|---|---|
+| `Google.Protobuf` | 3.36.2 | `Sentinel.Agent` | Protobuf runtime — serialization and deserialization of generated message types | BSD 3-Clause |
+| `Grpc.Tools` | 2.85.0 | `Sentinel.Agent` | Build-time code generator; compiles `sentinel.proto` into C# classes at `dotnet build` time. Bundles its own `protoc` — no system install needed | Apache 2.0 |
 | `xunit` | 2.9.2 | `Sentinel.Agent.Tests` | Test framework | Apache 2.0 |
 | `xunit.runner.visualstudio` | 2.8.2 | `Sentinel.Agent.Tests` | Allows `dotnet test` to discover and run xUnit tests | MIT |
 | `Microsoft.NET.Test.Sdk` | 17.12.0 | `Sentinel.Agent.Tests` | Required infrastructure for `dotnet test` | MIT |
@@ -13,6 +15,8 @@
 
 | Crate | Version | Used in | Why | License |
 |---|---|---|---|---|
+| `prost` | 0.13.5 | `sentinel-panel` | Protobuf runtime — serialization and deserialization of generated message types | Apache 2.0 |
+| `prost-build` | 0.13.5 | `sentinel-panel` (build) | Compiles `sentinel.proto` into Rust structs at `cargo build` time. Requires system `protoc` | Apache 2.0 |
 | `slint` | 1.18.1 | `sentinel-panel` | UI framework for the panel's fullscreen dashboard | GPL v3 |
 | `slint-build` | 1.18.1 | `sentinel-panel` (build) | Compiles `.slint` UI files into Rust code at build time | GPL v3 |
 | `cargo-audit` | 0.22.2 | `panel-gates.yml`, `ci-gates-check.sh`, `scheduled-cve-scan.yml` | Scans `Cargo.lock` against the RustSec advisory database for known CVEs | Apache 2.0 / MIT |

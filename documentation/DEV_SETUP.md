@@ -46,7 +46,23 @@ dotnet --version
 
 The version should match or exceed the one in `global.json` at the repo root. See [Toolchain versions](TECH_STACK.md#toolchain-versions).
 
-### 3. Rust
+### 3. Protocol Buffers compiler
+
+The Rust panel build uses [prost-build](https://docs.rs/prost-build) to generate Rust types from the `.proto` schema at compile time. It requires `protoc` (the Protobuf compiler) to be on your PATH:
+
+```bash
+brew install protobuf
+```
+
+Verify:
+
+```bash
+protoc --version
+```
+
+> The C# agent does not need this — `Grpc.Tools` bundles its own `protoc` for Windows, Linux, and macOS.
+
+### 4. Rust
 
 [Rust](https://www.rust-lang.org) is installed via [rustup](https://rustup.rs), the official toolchain manager:
 

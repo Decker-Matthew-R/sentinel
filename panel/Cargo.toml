@@ -5,6 +5,8 @@ edition = "2024"
 
 [dependencies]
 slint = "1"
+prost = "0.13"
 
 [build-dependencies]
 slint-build = "1"
+prost-build = "0.13"
