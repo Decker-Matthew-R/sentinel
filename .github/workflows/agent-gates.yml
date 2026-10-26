@@ -21,7 +21,10 @@ jobs:
 
       - name: Format .NET
         run: dotnet format --verify-no-changes agent/
-      
+
+      - name: CVE Scan
+        run: dotnet list agent/ package --vulnerable --include-transitive
+
       - name: Build
         run: dotnet build agent/
 

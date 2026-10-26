@@ -23,6 +23,12 @@ jobs:
         with:
           workspaces: panel
 
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: CVE Scan
+        run: cargo audit --file panel/Cargo.lock
+
       - name: Format Rust
         run: cargo fmt --manifest-path panel/Cargo.toml -- --check
 

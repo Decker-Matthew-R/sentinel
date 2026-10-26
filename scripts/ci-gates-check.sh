@@ -54,6 +54,13 @@ run_step "Panel — cargo fmt --check" \
 run_step "Panel — cargo clippy" \
   cargo clippy --manifest-path panel/Cargo.toml -- -D warnings
 
+# ── Security ────────────────────────────────────────────────────────────────────
+header "Security"
+run_step "Agent — dotnet list package --vulnerable" \
+  dotnet list agent/ package --vulnerable --include-transitive
+run_step "Panel — cargo audit" \
+  cargo audit --file panel/Cargo.lock
+
 # ── Tests ───────────────────────────────────────────────────────────────────────
 header "Tests"
 run_step "Agent — dotnet test" \

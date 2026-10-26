@@ -15,6 +15,7 @@
 |---|---|---|---|---|
 | `slint` | 1.18.1 | `sentinel-panel` | UI framework for the panel's fullscreen dashboard | GPL v3 |
 | `slint-build` | 1.18.1 | `sentinel-panel` (build) | Compiles `.slint` UI files into Rust code at build time | GPL v3 |
+| `cargo-audit` | 0.22.2 | `panel-gates.yml`, `ci-gates-check.sh` | Scans `Cargo.lock` against the RustSec advisory database for known CVEs | Apache 2.0 / MIT |
 
 ## GitHub Actions
 

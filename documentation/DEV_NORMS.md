@@ -32,8 +32,8 @@ The following CI checks are required to pass before a PR can be merged:
 
 | Check | Workflow | What it enforces |
 |---|---|---|
-| `agent-gates` | `agent-gates.yml` | Format, build, and test the agent |
-| `panel-gates` | `panel-gates.yml` | Format, lint, build, and test the panel |
+| `agent-gates` | `agent-gates.yml` | Format, CVE scan, build, and test the agent |
+| `panel-gates` | `panel-gates.yml` | Format, lint, CVE scan, build, and test the panel |
 | `Require Issue Link` | `require-issue-link.yml` | PR body contains `Closes #N` |
 
 ---
@@ -146,7 +146,7 @@ Something broken that should work. Key fields:
 
 **UI testing:** Slint's `slint::testing` module supports headless component testing. Deferred until M4 when view models with real logic are introduced — there is nothing meaningful to assert against pure layout code.
 
-**CI:** Both halves run automatically on PRs via `agent-gates.yml` and `panel-gates.yml`. Run `./scripts/ci-gates-check.sh` locally before pushing for a faster feedback loop.
+**CI:** Both halves run automatically on PRs via `agent-gates.yml` and `panel-gates.yml` (format, lint, CVE scan, build, test). Run `./scripts/ci-gates-check.sh` locally before pushing for a faster feedback loop.
 
 ---
 
@@ -162,4 +162,4 @@ The full story lifecycle is automated:
 
 Workflows involved: `move-to-in-progress.yml`, `require-issue-link.yml`, and GitHub's built-in project workflows.
 
-CI quality gates run on every PR via `agent-gates.yml` and `panel-gates.yml` (format, lint, build, test).
+CI quality gates run on every PR via `agent-gates.yml` and `panel-gates.yml` (format, lint, CVE scan, build, test).
