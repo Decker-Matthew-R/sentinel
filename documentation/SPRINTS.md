@@ -54,7 +54,9 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] CI: enforce `dotnet format` on the agent.
 - [x] CI: enforce `rustfmt` on the panel.
 - [x] CI: enforce `clippy` on the panel.
-- [ ] Dev setup doc: required tools and versions (.NET SDK, rustup, protoc, cross/Docker).
+- [x] Dev setup doc: required tools and versions (.NET SDK, rustup, protoc, cross/Docker).
+- [ ] Require CI gate checks to pass before merging into main.
+- [ ] Add a local pre-push check script (`scripts/check.sh`).
 
 **Outcomes:** Clone the repo on a fresh machine, follow the setup doc, and get green builds and tests locally and in CI.
 **Learning:** Repo hygiene, GitHub Actions, cross-compilation, Rust and .NET project structure.

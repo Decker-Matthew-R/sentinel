@@ -4,6 +4,12 @@ Developer workflow, conventions, and automation for this repo.
 
 ---
 
+## Dev setup
+
+See [Dev Setup](DEV_SETUP.md) for step-by-step instructions to install the required tools, build both halves, run tests, and launch the panel UI on your desktop.
+
+---
+
 ## Board automation
 
 Creating a branch moves its associated issue to **In progress** on the Sentinel project board automatically. No manual card dragging needed.
