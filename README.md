@@ -14,6 +14,7 @@ Sentinel sits beside your PC and shows live hardware metrics — temperatures, u
 - [Tech Stack](documentation/TECH_STACK.md): each technology choice with pros, cons, and alternatives
 - [Roadmap](documentation/SPRINTS.md): milestones from dev setup to v1.0 and beyond
 - [Dev Norms](documentation/DEV_NORMS.md): branch workflow, board automation, commit and PR conventions
+- [Dev Setup](documentation/DEV_SETUP.md): required tools and step-by-step setup for a new machine
 
 **On this page**
 
@@ -93,7 +94,7 @@ sentinel/
 
 ## Getting started
 
-_Coming in Milestone 0._ This section will cover the required tools (.NET SDK, Rust, protoc) and how to build and run both halves locally.
+See [Dev Setup](documentation/DEV_SETUP.md) for step-by-step instructions to install the required tools, build both halves, run tests, and launch the panel UI on your desktop.
 
 ## Contributing workflow
 
