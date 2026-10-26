@@ -26,6 +26,9 @@ jobs:
         with:
           workspaces: panel
 
+      - name: Format
+        run: cargo fmt --manifest-path panel/Cargo.toml -- --check
+        
       - name: Build
         run: cargo build --manifest-path panel/Cargo.toml
 
