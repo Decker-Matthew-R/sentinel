@@ -1,15 +1,15 @@
-name: Run Panel Tests
+name: Run Panel Gates
 
 on:
   push:
     branches: [main]
     paths:
       - 'panel/**'
-      - '.github/workflows/panel-tests.yml'
+      - '.github/workflows/panel-gates.yml'
   pull_request:
     paths:
       - 'panel/**'
-      - '.github/workflows/panel-tests.yml'
+      - '.github/workflows/panel-gates.yml'
 
 jobs:
   build-and-test:
@@ -26,8 +26,11 @@ jobs:
         with:
           workspaces: panel
 
-      - name: Format
+      - name: Format Rust
         run: cargo fmt --manifest-path panel/Cargo.toml -- --check
+
+      - name: Lint Rust
+        run: cargo clippy --manifest-path panel/Cargo.toml -- -D warnings
         
       - name: Build
         run: cargo build --manifest-path panel/Cargo.toml

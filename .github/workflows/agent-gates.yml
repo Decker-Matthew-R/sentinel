@@ -1,15 +1,15 @@
-name: Run Agent Tests
+name: Run Agent Gates
 
 on:
   push:
     branches: [main]
     paths:
       - 'agent/**'
-      - '.github/workflows/agent-tests.yml'
+      - '.github/workflows/agent-gates.yml'
   pull_request:
     paths:
       - 'agent/**'
-      - '.github/workflows/agent-tests.yml'
+      - '.github/workflows/agent-gates.yml'
 
 jobs:
   build-and-test:
@@ -22,7 +22,7 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Format
+      - name: Format .NET
         run: dotnet format --verify-no-changes agent/
       
       - name: Build
