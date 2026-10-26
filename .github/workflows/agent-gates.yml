@@ -7,9 +7,6 @@ on:
       - 'agent/**'
       - '.github/workflows/agent-gates.yml'
   pull_request:
-    paths:
-      - 'agent/**'
-      - '.github/workflows/agent-gates.yml'
 
 jobs:
   agent-gates:

@@ -7,9 +7,6 @@ on:
       - 'panel/**'
       - '.github/workflows/panel-gates.yml'
   pull_request:
-    paths:
-      - 'panel/**'
-      - '.github/workflows/panel-gates.yml'
 
 jobs:
   panel-gates:
