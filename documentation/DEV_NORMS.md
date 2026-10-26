@@ -147,7 +147,7 @@ Something broken that should work. Key fields:
 
 **UI testing:** Slint's `slint::testing` module supports headless component testing. Deferred until M4 when view models with real logic are introduced — there is nothing meaningful to assert against pure layout code.
 
-**CI:** Both halves run automatically on PRs via `agent-gates.yml` and `panel-gates.yml` (format, lint, CVE scan, build, test). `secret-scan.yml` scans every PR for secrets and credentials. Run `./scripts/ci-gates-check.sh` locally before pushing for a faster feedback loop.
+**CI:** Both halves run automatically on PRs via `agent-gates.yml` and `panel-gates.yml` (format, lint, CVE scan, build, test). `secret-scan.yml` scans every PR for secrets and credentials. `scheduled-cve-scan.yml` runs daily and on demand to catch newly published CVEs in existing dependencies. Run `./scripts/ci-gates-check.sh` locally before pushing for a faster feedback loop.
 
 ---
 
