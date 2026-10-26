@@ -1,6 +1,6 @@
 # Roadmap — Sentinel
 
-> Status: **Proposed**. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
+> Status: **In progress** — M0 complete, working towards M2 (Walking skeleton). This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
 
 ## Goals of the project
 
@@ -37,7 +37,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 ## MVP (Milestones 0–6)
 
-### Milestone 0 — Dev environment and GitHub setup
+### Milestone 0 — Dev environment and GitHub setup ✓ Complete
 
 **Goal:** A repo and toolchain ready to build on, with no hardware required.
 

@@ -4,7 +4,7 @@
 
 Sentinel sits beside your PC and shows live hardware metrics — temperatures, utilization, clocks, uptime — with one-touch buttons for things like launching Steam or jumping back into your last game. It keeps that information off your main monitor, always visible at a glance.
 
-> **Status:** 🚧 Planning — Milestone 0 (dev environment and GitHub setup). Hardware choice still pending.
+> **Status:** 🚧 In progress — Milestone 0 complete, working towards M2 (Walking skeleton). Hardware choice still pending.
 
 ## Index
 
