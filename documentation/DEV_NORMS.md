@@ -133,7 +133,7 @@ Something broken that should work. Key fields:
 
 **UI testing:** Slint's `slint::testing` module supports headless component testing. Deferred until M4 when view models with real logic are introduced — there is nothing meaningful to assert against pure layout code.
 
-**CI:** Both halves run automatically on PRs via `agent-tests.yml` and `panel-tests.yml`.
+**CI:** Both halves run automatically on PRs via `agent-gates.yml` and `panel-gates.yml`.
 
 ---
 
@@ -148,3 +148,5 @@ The full story lifecycle is automated:
 | PR merged | Issue closed, card moves to **Done** |
 
 Workflows involved: `move-to-in-progress.yml`, `require-issue-link.yml`, and GitHub's built-in project workflows.
+
+CI quality gates run on every PR via `agent-gates.yml` and `panel-gates.yml` (format, lint, build, test).
