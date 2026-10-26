@@ -8,6 +8,9 @@ env:
   STATUS_FIELD_ID: PVTSSF_lAHOBXibkM4Boo-EzhnIHBI
   IN_PROGRESS_OPTION_ID: 47fc9ee4
 
+permissions:
+  contents: read
+
 jobs:
   move-issue:
     if: github.event.ref_type == 'branch'

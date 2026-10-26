@@ -8,6 +8,9 @@ on:
       - '.github/workflows/panel-gates.yml'
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   panel-gates:
     runs-on: ubuntu-latest
