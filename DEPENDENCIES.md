@@ -21,6 +21,7 @@
 
 | Action | Version | Used in | Why | License |
 |---|---|---|---|---|
-| `actions/checkout` | v4 | `move-to-in-progress.yml`, `agent-gates.yml`, `panel-gates.yml` | Checks out the repo so workflows can access repo files | MIT |
+| `actions/checkout` | v4 | `move-to-in-progress.yml`, `agent-gates.yml`, `panel-gates.yml`, `secret-scan.yml` | Checks out the repo so workflows can access repo files | MIT |
 | `actions/setup-dotnet` | v4 | `agent-gates.yml` | Installs the .NET SDK version pinned in `global.json` on the CI runner | MIT |
 | `Swatinem/rust-cache` | v2 | `panel-gates.yml` | Caches Cargo registry and build artifacts to speed up Rust CI runs | MIT |
+| `gitleaks/gitleaks-action` | v2 | `secret-scan.yml` | Scans PR changesets for secrets and credentials; fails the check if any are found | MIT |

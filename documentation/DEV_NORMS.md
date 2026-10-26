@@ -35,6 +35,7 @@ The following CI checks are required to pass before a PR can be merged:
 | `agent-gates` | `agent-gates.yml` | Format, CVE scan, build, and test the agent |
 | `panel-gates` | `panel-gates.yml` | Format, lint, CVE scan, build, and test the panel |
 | `Require Issue Link` | `require-issue-link.yml` | PR body contains `Closes #N` |
+| `secret-scan` | `secret-scan.yml` | Scans PR changesets for secrets and credentials |
 
 ---
 
@@ -146,7 +147,7 @@ Something broken that should work. Key fields:
 
 **UI testing:** Slint's `slint::testing` module supports headless component testing. Deferred until M4 when view models with real logic are introduced — there is nothing meaningful to assert against pure layout code.
 
-**CI:** Both halves run automatically on PRs via `agent-gates.yml` and `panel-gates.yml` (format, lint, CVE scan, build, test). Run `./scripts/ci-gates-check.sh` locally before pushing for a faster feedback loop.
+**CI:** Both halves run automatically on PRs via `agent-gates.yml` and `panel-gates.yml` (format, lint, CVE scan, build, test). `secret-scan.yml` scans every PR for secrets and credentials. Run `./scripts/ci-gates-check.sh` locally before pushing for a faster feedback loop.
 
 ---
 
@@ -162,4 +163,4 @@ The full story lifecycle is automated:
 
 Workflows involved: `move-to-in-progress.yml`, `require-issue-link.yml`, and GitHub's built-in project workflows.
 
-CI quality gates run on every PR via `agent-gates.yml` and `panel-gates.yml` (format, lint, CVE scan, build, test).
+CI quality gates run on every PR via `agent-gates.yml`, `panel-gates.yml` (format, lint, CVE scan, build, test), and `secret-scan.yml` (secret detection).
