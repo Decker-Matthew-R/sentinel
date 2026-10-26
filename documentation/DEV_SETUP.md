@@ -124,7 +124,15 @@ A window will appear titled **Sentinel**. This is the development entry point fo
 
 ## Format and lint
 
-Run these before pushing to avoid CI failures.
+Before pushing, run the CI gates check script — it auto-formats both halves, verifies linting, and runs all tests in one step:
+
+```bash
+./scripts/ci-gates-check.sh
+```
+
+This mirrors exactly what the CI pipeline enforces and gives you a fast local feedback loop before opening a PR. See [Dev Norms](DEV_NORMS.md) for the full workflow.
+
+If you prefer to run steps individually:
 
 **Agent:**
 
@@ -138,6 +146,4 @@ dotnet format agent/
 cargo fmt --manifest-path panel/Cargo.toml
 cargo clippy --manifest-path panel/Cargo.toml -- -D warnings
 ```
-
-CI enforces these checks on every PR. See [Dev Norms](DEV_NORMS.md) for the full workflow.
 
