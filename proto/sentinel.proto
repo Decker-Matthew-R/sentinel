@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package sentinel.v1;
+
+option csharp_namespace = "Sentinel.V1";
+
+message Envelope {
+  uint32 version = 1;
+  oneof payload {
+    Hello hello = 2;
+    Heartbeat heartbeat = 3;
+    MetricsSnapshot metrics_snapshot = 4;
+  }
+}
+
+message Hello {
+  string agent_version = 1;
+}
+
+message Heartbeat {}
+
+message MetricsSnapshot {
+  uint64 uptime_seconds = 1;
+}

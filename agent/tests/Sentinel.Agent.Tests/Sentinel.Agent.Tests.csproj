@@ -18,4 +18,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Sentinel.Agent\Sentinel.Agent.csproj" />
+  </ItemGroup>
+
 </Project>
