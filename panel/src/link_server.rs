@@ -41,14 +41,22 @@ impl LinkServer {
             println!("[Connected] agent: {agent_version}");
             tx.send(ConnectionState::Connected {
                 agent_version: agent_version.clone(),
+                uptime_seconds: 0,
             })
             .ok();
 
             let mut count = 0u64;
             loop {
                 match timeout(heartbeat_timeout, read_frame(&mut stream)).await {
-                    Ok(Ok(_)) => {
+                    Ok(Ok(envelope)) => {
                         count += 1;
+                        if let Some(envelope::Payload::MetricsSnapshot(m)) = envelope.payload {
+                            tx.send(ConnectionState::Connected {
+                                agent_version: agent_version.clone(),
+                                uptime_seconds: m.uptime_seconds,
+                            })
+                            .ok();
+                        }
                         println!("[Heartbeat] {count}");
                     }
                     _ => {
@@ -83,7 +91,7 @@ mod tests {
     use super::*;
     use crate::connection_state::ConnectionState;
     use crate::framing::write_frame;
-    use crate::proto::sentinel::v1::{Envelope, Heartbeat, Hello, envelope};
+    use crate::proto::sentinel::v1::{Envelope, Heartbeat, Hello, MetricsSnapshot, envelope};
     use std::time::Duration;
     use tokio::net::TcpStream;
     use tokio::sync::watch;
@@ -123,7 +131,8 @@ mod tests {
         assert_eq!(
             *rx.borrow(),
             ConnectionState::Connected {
-                agent_version: "0.1.0".into()
+                agent_version: "0.1.0".into(),
+                uptime_seconds: 0,
             }
         );
     }
@@ -224,7 +233,8 @@ mod tests {
         assert_eq!(
             *rx.borrow(),
             ConnectionState::Connected {
-                agent_version: "0.2.0".into()
+                agent_version: "0.2.0".into(),
+                uptime_seconds: 0,
             }
         );
     }
@@ -291,5 +301,48 @@ mod tests {
 
         let result = server.accept_hello().await;
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn uptime_is_updated_from_metrics_snapshot() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+
+        tokio::spawn(async move { server.run(tx, Duration::from_secs(5)).await });
+
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected")
+            .unwrap();
+
+        write_frame(
+            &mut stream,
+            &Envelope {
+                version: 1,
+                payload: Some(envelope::Payload::MetricsSnapshot(MetricsSnapshot {
+                    uptime_seconds: 42,
+                })),
+            },
+        )
+        .await
+        .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not update uptime")
+            .unwrap();
+        assert_eq!(
+            *rx.borrow(),
+            ConnectionState::Connected {
+                agent_version: "0.1.0".into(),
+                uptime_seconds: 42,
+            }
+        );
     }
 }
