@@ -24,7 +24,10 @@ public class LinkClient(string host, int port)
             await FrameWriter.WriteAsync(stream, new Envelope
             {
                 Version = 1,
-                Heartbeat = new Heartbeat()
+                MetricsSnapshot = new MetricsSnapshot
+                {
+                    UptimeSeconds = (ulong)(Environment.TickCount64 / 1000)
+                }
             });
         }
     }

@@ -10,15 +10,38 @@ use tokio::sync::watch;
 
 slint::include_modules!();
 
-fn to_slint_props(state: &ConnectionState) -> (ConnectionStatus, String) {
+fn format_uptime(seconds: u64) -> String {
+    let days = seconds / 86400;
+    let hours = (seconds % 86400) / 3600;
+    let mins = (seconds % 3600) / 60;
+    let secs = seconds % 60;
+    if days > 0 {
+        format!("{days}d {hours}h {mins}m")
+    } else if hours > 0 {
+        format!("{hours}h {mins}m {secs}s")
+    } else if mins > 0 {
+        format!("{mins}m {secs}s")
+    } else {
+        format!("{secs}s")
+    }
+}
+
+fn to_slint_props(state: &ConnectionState) -> (ConnectionStatus, String, String) {
     match state {
-        ConnectionState::Waiting => (ConnectionStatus::Waiting, String::new()),
-        ConnectionState::Connected { agent_version } => {
-            (ConnectionStatus::Connected, agent_version.clone())
-        }
-        ConnectionState::Stale { agent_version } => {
-            (ConnectionStatus::Stale, agent_version.clone())
-        }
+        ConnectionState::Waiting => (ConnectionStatus::Waiting, String::new(), String::new()),
+        ConnectionState::Connected {
+            agent_version,
+            uptime_seconds,
+        } => (
+            ConnectionStatus::Connected,
+            agent_version.clone(),
+            format_uptime(*uptime_seconds),
+        ),
+        ConnectionState::Stale { agent_version } => (
+            ConnectionStatus::Stale,
+            agent_version.clone(),
+            String::new(),
+        ),
     }
 }
 
@@ -41,12 +64,13 @@ async fn main() {
                 break;
             }
             let state = rx.borrow().clone();
-            let (status, version) = to_slint_props(&state);
+            let (status, version, uptime) = to_slint_props(&state);
             let handle = app_weak.clone();
             let _ = slint::invoke_from_event_loop(move || {
                 if let Some(app) = handle.upgrade() {
                     app.set_status(status);
                     app.set_agent_version(version.into());
+                    app.set_uptime(uptime.into());
                 }
             });
         }
@@ -80,46 +104,76 @@ mod tests {
 
         assert_eq!(app.get_status(), ConnectionStatus::Waiting);
         assert_eq!(app.get_agent_version().as_str(), "");
+        assert_eq!(app.get_uptime().as_str(), "");
 
-        let (status, version) = to_slint_props(&ConnectionState::Connected {
+        let (status, version, uptime) = to_slint_props(&ConnectionState::Connected {
             agent_version: "fake-1.0.0".into(),
+            uptime_seconds: 3661,
         });
         app.set_status(status);
         app.set_agent_version(version.into());
+        app.set_uptime(uptime.into());
         assert_eq!(app.get_status(), ConnectionStatus::Connected);
         assert_eq!(app.get_agent_version().as_str(), "fake-1.0.0");
+        assert_eq!(app.get_uptime().as_str(), "1h 1m 1s");
 
-        let (status, version) = to_slint_props(&ConnectionState::Stale {
+        let (status, version, uptime) = to_slint_props(&ConnectionState::Stale {
             agent_version: "fake-1.0.0".into(),
         });
         app.set_status(status);
         app.set_agent_version(version.into());
+        app.set_uptime(uptime.into());
         assert_eq!(app.get_status(), ConnectionStatus::Stale);
         assert_eq!(app.get_agent_version().as_str(), "fake-1.0.0");
+        assert_eq!(app.get_uptime().as_str(), "");
     }
 
     #[test]
     fn waiting_state_maps_to_waiting_status() {
-        let (status, version) = to_slint_props(&ConnectionState::Waiting);
+        let (status, version, uptime) = to_slint_props(&ConnectionState::Waiting);
         assert_eq!(status, ConnectionStatus::Waiting);
         assert!(version.is_empty());
+        assert!(uptime.is_empty());
     }
 
     #[test]
     fn connected_state_maps_to_connected_status() {
-        let (status, version) = to_slint_props(&ConnectionState::Connected {
+        let (status, version, uptime) = to_slint_props(&ConnectionState::Connected {
             agent_version: "0.1.0".into(),
+            uptime_seconds: 3661,
         });
         assert_eq!(status, ConnectionStatus::Connected);
         assert_eq!(version, "0.1.0");
+        assert_eq!(uptime, "1h 1m 1s");
     }
 
     #[test]
     fn stale_state_maps_to_stale_status() {
-        let (status, version) = to_slint_props(&ConnectionState::Stale {
+        let (status, version, uptime) = to_slint_props(&ConnectionState::Stale {
             agent_version: "0.1.0".into(),
         });
         assert_eq!(status, ConnectionStatus::Stale);
         assert_eq!(version, "0.1.0");
+        assert!(uptime.is_empty());
+    }
+
+    #[test]
+    fn format_uptime_seconds_only() {
+        assert_eq!(format_uptime(45), "45s");
+    }
+
+    #[test]
+    fn format_uptime_minutes_and_seconds() {
+        assert_eq!(format_uptime(125), "2m 5s");
+    }
+
+    #[test]
+    fn format_uptime_hours_minutes_seconds() {
+        assert_eq!(format_uptime(3661), "1h 1m 1s");
+    }
+
+    #[test]
+    fn format_uptime_days_drops_seconds() {
+        assert_eq!(format_uptime(90061), "1d 1h 1m");
     }
 }

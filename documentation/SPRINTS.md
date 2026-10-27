@@ -90,7 +90,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] #44 — Panel: connection state machine (Waiting → Connected → Stale)
 - [x] #45 — Build `tools/fake-agent` for UI development without hardware
 - [x] #46 — Panel shows connection state: Waiting for PC, Connected, and Stale
-- [ ] #47 — Panel displays live uptime from the agent
+- [x] #47 — Panel displays live uptime from the agent
 - [ ] #48 — Write and deploy the panel boot service *(hardware blocked)*
 
 **Outcomes:** Power on the tablet → it boots into the app → uptime appears and survives agent restarts.

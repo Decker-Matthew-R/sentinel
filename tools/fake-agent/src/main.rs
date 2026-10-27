@@ -7,7 +7,7 @@ mod proto {
 }
 
 use prost::Message;
-use proto::sentinel::v1::{envelope, Envelope, Heartbeat, Hello};
+use proto::sentinel::v1::{envelope, Envelope, Hello, MetricsSnapshot};
 use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
@@ -47,11 +47,13 @@ pub async fn run(addr: &str) -> Result<(), std::io::Error> {
             &mut stream,
             &Envelope {
                 version: 1,
-                payload: Some(envelope::Payload::Heartbeat(Heartbeat {})),
+                payload: Some(envelope::Payload::MetricsSnapshot(MetricsSnapshot {
+                    uptime_seconds: count,
+                })),
             },
         )
         .await?;
-        println!("♥ {count}");
+        println!("♥ {count}s");
     }
 }
 
@@ -96,7 +98,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn fake_agent_sends_heartbeat_after_hello() {
+    async fn fake_agent_sends_metrics_snapshot_after_hello() {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = listener.local_addr().unwrap().port();
 
@@ -111,10 +113,10 @@ mod tests {
 
         let second = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
             .await
-            .expect("Heartbeat not received within timeout");
+            .expect("MetricsSnapshot not received within timeout");
         assert!(matches!(
             second.payload,
-            Some(envelope::Payload::Heartbeat(_))
+            Some(envelope::Payload::MetricsSnapshot(_))
         ));
     }
 }

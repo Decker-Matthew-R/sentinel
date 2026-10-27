@@ -7,6 +7,7 @@ export component AppWindow inherits Window {
 
     in property <ConnectionStatus> status: ConnectionStatus.waiting;
     in property <string> agent-version: "";
+    in property <string> uptime: "";
 
     if root.status == ConnectionStatus.waiting : VerticalLayout {
         alignment: center;
@@ -27,6 +28,11 @@ export component AppWindow inherits Window {
         }
         Text {
             text: root.agent-version;
+            horizontal-alignment: center;
+            font-size: 14px;
+        }
+        Text {
+            text: root.uptime;
             horizontal-alignment: center;
             font-size: 14px;
         }

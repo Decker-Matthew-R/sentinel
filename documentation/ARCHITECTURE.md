@@ -130,7 +130,7 @@ Both timeout and disconnect transition to `Stale` rather than back to `Waiting` 
 | Message | Direction | When | Status |
 |---|---|---|---|
 | `Hello` | Agent → Tablet | On connect: protocol version, auth token | Defined in v1 |
-| `Heartbeat` | Both | Every second; drives stale detection | Defined in v1 |
+| `Heartbeat` | — | Reserved; defined in v1 but unused — `MetricsSnapshot` now drives stale detection | Defined in v1 |
 | `MetricsSnapshot` | Agent → Tablet | ~1 Hz: utilization, temps, clocks, power, memory, uptime | Defined in v1 (uptime only — fields expand in M3) |
 | `Capabilities` | Agent → Tablet | After handshake: features and action list the agent supports | Planned (M5) |
 | `Specs` | Agent → Tablet | Once per connection: CPU/GPU model, RAM, OS | Planned (M3) |

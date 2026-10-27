@@ -7,7 +7,7 @@ namespace Sentinel.Agent.Tests;
 public class LinkClientTest
 {
     [Fact]
-    public async Task LinkClient_sends_Hello_then_Heartbeat()
+    public async Task LinkClient_sends_Hello_then_MetricsSnapshot()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -28,8 +28,9 @@ public class LinkClientTest
         Assert.Equal(Envelope.PayloadOneofCase.Hello, hello.PayloadCase);
         Assert.Equal("0.1.0", hello.Hello.AgentVersion);
 
-        var heartbeat = await FrameReader.ReadAsync(stream);
-        Assert.Equal(Envelope.PayloadOneofCase.Heartbeat, heartbeat.PayloadCase);
+        var metrics = await FrameReader.ReadAsync(stream);
+        Assert.Equal(Envelope.PayloadOneofCase.MetricsSnapshot, metrics.PayloadCase);
+        Assert.True(metrics.MetricsSnapshot.UptimeSeconds > 0);
 
         await cts.CancelAsync();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => clientTask);
