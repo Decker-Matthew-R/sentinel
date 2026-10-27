@@ -2,9 +2,11 @@ mod connection_state;
 mod framing;
 mod link_server;
 mod proto;
+mod state_store;
 
 use connection_state::ConnectionState;
 use link_server::LinkServer;
+use state_store::StateStore;
 use std::time::Duration;
 use tokio::sync::watch;
 
@@ -49,9 +51,10 @@ fn to_slint_props(state: &ConnectionState) -> (ConnectionStatus, String, String)
 async fn main() {
     let server = LinkServer::bind(9000).await.unwrap();
     let (tx, rx) = watch::channel(ConnectionState::Waiting);
+    let (store, _store_rx) = StateStore::new();
 
     tokio::spawn(async move {
-        server.run(tx, Duration::from_secs(5)).await;
+        server.run(tx, &store, Duration::from_secs(5)).await;
     });
 
     let app = AppWindow::new().unwrap();

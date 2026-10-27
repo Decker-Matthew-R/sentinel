@@ -1,6 +1,7 @@
 use crate::connection_state::ConnectionState;
 use crate::framing::read_frame;
 use crate::proto::sentinel::v1::envelope;
+use crate::state_store::StateStore;
 use std::time::Duration;
 use tokio::net::TcpListener;
 use tokio::sync::watch;
@@ -21,7 +22,12 @@ impl LinkServer {
         self.listener.local_addr().unwrap().port()
     }
 
-    pub async fn run(&self, tx: watch::Sender<ConnectionState>, heartbeat_timeout: Duration) {
+    pub async fn run(
+        &self,
+        tx: watch::Sender<ConnectionState>,
+        store: &StateStore,
+        heartbeat_timeout: Duration,
+    ) {
         loop {
             let (mut stream, _) = match self.listener.accept().await {
                 Ok(s) => s,
@@ -56,11 +62,13 @@ impl LinkServer {
                                 uptime_seconds: m.uptime_seconds,
                             })
                             .ok();
+                            store.update(m);
                         }
                         println!("[Heartbeat] {count}");
                     }
                     _ => {
                         println!("[Stale] agent: {agent_version}");
+                        store.clear();
                         tx.send(ConnectionState::Stale {
                             agent_version: agent_version.clone(),
                         })
@@ -92,6 +100,7 @@ mod tests {
     use crate::connection_state::ConnectionState;
     use crate::framing::write_frame;
     use crate::proto::sentinel::v1::{Envelope, Heartbeat, Hello, MetricsSnapshot, envelope};
+    use crate::state_store::StateStore;
     use std::time::Duration;
     use tokio::net::TcpStream;
     use tokio::sync::watch;
@@ -116,8 +125,9 @@ mod tests {
         let server = LinkServer::bind(0).await.unwrap();
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
 
-        tokio::spawn(async move { server.run(tx, Duration::from_secs(5)).await });
+        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))
@@ -142,8 +152,9 @@ mod tests {
         let server = LinkServer::bind(0).await.unwrap();
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
 
-        tokio::spawn(async move { server.run(tx, Duration::from_millis(100)).await });
+        tokio::spawn(async move { server.run(tx, &store, Duration::from_millis(100)).await });
 
         let mut _stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut _stream, &hello_envelope("0.1.0"))
@@ -171,8 +182,9 @@ mod tests {
         let server = LinkServer::bind(0).await.unwrap();
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
 
-        tokio::spawn(async move { server.run(tx, Duration::from_secs(5)).await });
+        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -202,8 +214,9 @@ mod tests {
         let server = LinkServer::bind(0).await.unwrap();
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
 
-        tokio::spawn(async move { server.run(tx, Duration::from_secs(5)).await });
+        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -308,8 +321,9 @@ mod tests {
         let server = LinkServer::bind(0).await.unwrap();
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
 
-        tokio::spawn(async move { server.run(tx, Duration::from_secs(5)).await });
+        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))
@@ -345,5 +359,87 @@ mod tests {
                 uptime_seconds: 42,
             }
         );
+    }
+
+    #[tokio::test]
+    async fn store_is_updated_when_metrics_snapshot_arrives() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, mut store_rx) = StateStore::new();
+
+        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected")
+            .unwrap();
+
+        write_frame(
+            &mut stream,
+            &Envelope {
+                version: 1,
+                payload: Some(envelope::Payload::MetricsSnapshot(MetricsSnapshot {
+                    uptime_seconds: 99,
+                    ..Default::default()
+                })),
+            },
+        )
+        .await
+        .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), store_rx.changed())
+            .await
+            .expect("store was not updated")
+            .unwrap();
+        assert_eq!(store_rx.borrow().as_ref().unwrap().uptime_seconds, 99);
+    }
+
+    #[tokio::test]
+    async fn store_is_cleared_on_disconnect() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, mut store_rx) = StateStore::new();
+
+        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+
+        {
+            let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+            write_frame(&mut stream, &hello_envelope("0.1.0"))
+                .await
+                .unwrap();
+            tokio::time::timeout(Duration::from_secs(2), rx.changed())
+                .await
+                .expect("state did not transition to Connected")
+                .unwrap();
+            write_frame(
+                &mut stream,
+                &Envelope {
+                    version: 1,
+                    payload: Some(envelope::Payload::MetricsSnapshot(MetricsSnapshot {
+                        uptime_seconds: 10,
+                        ..Default::default()
+                    })),
+                },
+            )
+            .await
+            .unwrap();
+            tokio::time::timeout(Duration::from_secs(2), store_rx.changed())
+                .await
+                .expect("store was not updated")
+                .unwrap();
+        }
+
+        tokio::time::timeout(Duration::from_secs(2), store_rx.changed())
+            .await
+            .expect("store was not cleared on disconnect")
+            .unwrap();
+        assert!(store_rx.borrow().is_none());
     }
 }
