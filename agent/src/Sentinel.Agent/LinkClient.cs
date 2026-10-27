@@ -28,4 +28,36 @@ public class LinkClient(string host, int port)
             });
         }
     }
+
+    public async Task RunWithReconnectAsync(
+        CancellationToken cancellationToken,
+        Func<TimeSpan, CancellationToken, Task>? delayFunc = null,
+        Func<CancellationToken, Task>? connectFunc = null)
+    {
+        delayFunc ??= Task.Delay;
+        connectFunc ??= RunAsync;
+
+        var backoff = TimeSpan.FromSeconds(1);
+        var maxBackoff = TimeSpan.FromSeconds(30);
+
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                await connectFunc(cancellationToken);
+                return;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+            }
+
+            await delayFunc(backoff, cancellationToken);
+            backoff = TimeSpan.FromTicks(Math.Min(backoff.Ticks * 2, maxBackoff.Ticks));
+        }
+    }
 }
