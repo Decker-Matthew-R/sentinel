@@ -82,10 +82,10 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 **Goal:** The thinnest possible end-to-end slice: real data, real link, real boot.
 
 - [x] #38 — Define `proto/sentinel.proto` v1 and add codegen to both builds
-- [ ] #39 — Agent: implement length-prefixed framing
+- [x] #39 — Agent: implement length-prefixed framing
 - [x] #40 — Panel: implement length-prefixed framing
 - [x] #41 — Agent: `LinkClient` connects and completes the Hello handshake
-- [ ] #42 — Agent: `LinkClient` reconnects with exponential backoff
+- [x] #42 — Agent: `LinkClient` reconnects with exponential backoff
 - [ ] #43 — Panel: `LinkServer` accepts a TCP connection and decodes Hello
 - [ ] #44 — Panel: connection state machine (Waiting → Connected → Stale)
 - [ ] #45 — Build `tools/fake-agent` for UI development without hardware
