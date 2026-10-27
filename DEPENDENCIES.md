@@ -20,7 +20,14 @@
 | `prost-build` | 0.13.5 | `sentinel-panel` (build) | Compiles `sentinel.proto` into Rust structs at `cargo build` time. Requires system `protoc` | Apache 2.0 |
 | `slint` | 1.18.1 | `sentinel-panel` | UI framework for the panel's fullscreen dashboard | GPL v3 |
 | `slint-build` | 1.18.1 | `sentinel-panel` (build) | Compiles `.slint` UI files into Rust code at build time | GPL v3 |
-| `cargo-audit` | 0.22.2 | `panel-gates.yml`, `ci-gates-check.sh`, `scheduled-cve-scan.yml` | Scans `Cargo.lock` against the RustSec advisory database for known CVEs | Apache 2.0 / MIT |
+
+## CLI Tools
+
+| Tool | Version | Used in | Why | License |
+|---|---|---|---|---|
+| `gitleaks` | latest | `ci-gates-check.sh` | Scans commits for secrets and credentials locally, matching what `secret-scan.yml` enforces in CI | MIT |
+| `protoc` | latest | `ci-gates-check.sh`, `panel-gates.yml` | Compiles `sentinel.proto` at build time for the Rust panel (via `prost-build`). Install via `brew install protobuf` | BSD 3-Clause |
+| `cargo-audit` | 0.22.2 | `ci-gates-check.sh`, `panel-gates.yml`, `scheduled-cve-scan.yml` | Scans `Cargo.lock` against the RustSec advisory database for known CVEs | Apache 2.0 / MIT |
 
 ## GitHub Actions
 
