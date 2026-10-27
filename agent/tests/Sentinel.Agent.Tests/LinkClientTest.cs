@@ -15,9 +15,10 @@ public class LinkClientTest
 
         using var cts = new CancellationTokenSource();
 
+        var fakeSpecs = new FakeSpecsSource();
         var clientTask = Task.Run(() =>
         {
-            var client = new LinkClient("127.0.0.1", port, new SensorPoller(new FakeSensorSource()));
+            var client = new LinkClient("127.0.0.1", port, new SensorPoller(new FakeSensorSource()), fakeSpecs);
             return client.RunAsync(cts.Token);
         });
 
@@ -27,6 +28,14 @@ public class LinkClientTest
         var hello = await FrameReader.ReadAsync(stream);
         Assert.Equal(Envelope.PayloadOneofCase.Hello, hello.PayloadCase);
         Assert.Equal("0.1.0", hello.Hello.AgentVersion);
+
+        var specsEnvelope = await FrameReader.ReadAsync(stream);
+        Assert.Equal(Envelope.PayloadOneofCase.Specs, specsEnvelope.PayloadCase);
+        var expected = fakeSpecs.Read();
+        Assert.Equal(expected.CpuName, specsEnvelope.Specs.CpuName);
+        Assert.Equal(expected.GpuName, specsEnvelope.Specs.GpuName);
+        Assert.Equal(expected.RamTotalMb, specsEnvelope.Specs.RamTotalMb);
+        Assert.Equal(expected.OsVersion, specsEnvelope.Specs.OsVersion);
 
         var metrics = await FrameReader.ReadAsync(stream);
         Assert.Equal(Envelope.PayloadOneofCase.MetricsSnapshot, metrics.PayloadCase);

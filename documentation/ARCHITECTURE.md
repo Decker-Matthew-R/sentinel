@@ -81,7 +81,8 @@ flowchart LR
 | Component | Responsibility |
 |---|---|
 | `ISensorSource` | Interface over the sensor layer; `FakeSensorSource` is the always-available dev/test implementation; `LibreHardwareMonitorSource` is the real one (M3 #54) |
-| `SensorPoller` | Polls `ISensorSource` roughly once per second and produces `MetricsSnapshot`; gathers static `Specs` once |
+| `SensorPoller` | Polls `ISensorSource` roughly once per second and produces `MetricsSnapshot` |
+| `ISpecsSource` | Interface over static hardware info; `FakeSpecsSource` is the always-available dev/test implementation; `WindowsSpecsSource` is the real one (M3 #54) |
 | `SteamLibrary` | Finds Steam install and library folders, parses `localconfig.vdf` (last played) and `appmanifest_*.acf` (names), loads cached cover art |
 | `ActionRunner` | Maps an **action ID** to a predefined command. Never executes arbitrary input |
 | `LinkClient` | Connects to the tablet, performs the handshake, streams data, retries with backoff |
@@ -134,7 +135,7 @@ Both timeout and disconnect transition to `Stale` rather than back to `Waiting` 
 | `Heartbeat` | — | Reserved; defined in v1 but unused — `MetricsSnapshot` now drives stale detection | Defined in v1 |
 | `MetricsSnapshot` | Agent → Tablet | ~1 Hz: utilization, temps, clocks, power, memory, uptime | Defined in v1 (uptime + nested `CpuMetrics`, `GpuMetrics`, `RamMetrics` — fields expand in M3) |
 | `Capabilities` | Agent → Tablet | After handshake: features and action list the agent supports | Planned (M5) |
-| `Specs` | Agent → Tablet | Once per connection: CPU/GPU model, RAM, OS | Planned (M3) |
+| `Specs` | Agent → Tablet | Once per connection: CPU/GPU model, RAM, OS | Defined in v1 |
 | `GameInfo` | Agent → Tablet | On connect and when it changes: app ID, name, cover art bytes | Planned (M5) |
 | `Command` | Tablet → Agent | Button press: request ID + action ID | Planned (M5) |
 | `CommandResult` | Agent → Tablet | Success or error for a request ID | Planned (M5) |
