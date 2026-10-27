@@ -110,17 +110,16 @@ Threading: the Slint event loop owns the main thread; a tokio runtime handles ne
 
 ```mermaid
 stateDiagram-v2
-    [*] --> WaitingForPC
-    WaitingForPC --> Handshaking: TCP connect
-    Handshaking --> Connected: Hello + valid token
-    Handshaking --> WaitingForPC: bad token / timeout
-    Connected --> Stale: no heartbeat for 3 s
-    Stale --> Connected: heartbeat resumes
-    Stale --> WaitingForPC: socket closed
-    Connected --> WaitingForPC: socket closed
+    [*] --> Waiting
+    Waiting --> Connected: Hello received
+    Connected --> Stale: no heartbeat for 5 s
+    Connected --> Stale: socket closed
+    Stale --> Connected: new Hello on reconnect
 ```
 
 The UI shows each state explicitly: a "waiting for PC" screen, a dimmed or flagged dashboard when data is stale, and the live dashboard when connected.
+
+Both timeout and disconnect transition to `Stale` rather than back to `Waiting` — the panel has seen an agent before, so "stale data" is more informative than "no agent." A `Handshaking` intermediate state will be reintroduced when pre-shared token auth is added (M6).
 
 ## 5. Protocol
 

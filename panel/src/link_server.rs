@@ -1,6 +1,10 @@
+use crate::connection_state::ConnectionState;
 use crate::framing::read_frame;
 use crate::proto::sentinel::v1::envelope;
+use std::time::Duration;
 use tokio::net::TcpListener;
+use tokio::sync::watch;
+use tokio::time::timeout;
 
 pub struct LinkServer {
     listener: TcpListener,
@@ -17,6 +21,44 @@ impl LinkServer {
         self.listener.local_addr().unwrap().port()
     }
 
+    pub async fn run(&self, tx: watch::Sender<ConnectionState>, heartbeat_timeout: Duration) {
+        loop {
+            let (mut stream, _) = match self.listener.accept().await {
+                Ok(s) => s,
+                Err(_) => continue,
+            };
+
+            let envelope = match read_frame(&mut stream).await {
+                Ok(e) => e,
+                Err(_) => continue,
+            };
+
+            let agent_version = match envelope.payload {
+                Some(envelope::Payload::Hello(h)) => h.agent_version,
+                _ => continue,
+            };
+
+            tx.send(ConnectionState::Connected {
+                agent_version: agent_version.clone(),
+            })
+            .ok();
+
+            loop {
+                match timeout(heartbeat_timeout, read_frame(&mut stream)).await {
+                    Ok(Ok(_)) => {}
+                    _ => {
+                        tx.send(ConnectionState::Stale {
+                            agent_version: agent_version.clone(),
+                        })
+                        .ok();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    #[allow(dead_code)]
     pub async fn accept_hello(&self) -> Result<String, std::io::Error> {
         let (mut stream, _addr) = self.listener.accept().await?;
         let envelope = read_frame(&mut stream).await?;
@@ -33,9 +75,153 @@ impl LinkServer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::connection_state::ConnectionState;
     use crate::framing::write_frame;
     use crate::proto::sentinel::v1::{Envelope, Heartbeat, Hello, envelope};
+    use std::time::Duration;
     use tokio::net::TcpStream;
+    use tokio::sync::watch;
+
+    fn hello_envelope(version: &str) -> Envelope {
+        Envelope {
+            version: 1,
+            payload: Some(envelope::Payload::Hello(Hello {
+                agent_version: version.into(),
+            })),
+        }
+    }
+
+    #[test]
+    fn state_starts_as_waiting() {
+        let (_, rx) = watch::channel(ConnectionState::Waiting);
+        assert_eq!(*rx.borrow(), ConnectionState::Waiting);
+    }
+
+    #[tokio::test]
+    async fn state_becomes_connected_after_hello() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+
+        tokio::spawn(async move { server.run(tx, Duration::from_secs(5)).await });
+
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected")
+            .unwrap();
+        assert_eq!(
+            *rx.borrow(),
+            ConnectionState::Connected {
+                agent_version: "0.1.0".into()
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn state_becomes_stale_on_heartbeat_timeout() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+
+        tokio::spawn(async move { server.run(tx, Duration::from_millis(100)).await });
+
+        let mut _stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut _stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected")
+            .unwrap();
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Stale")
+            .unwrap();
+        assert_eq!(
+            *rx.borrow(),
+            ConnectionState::Stale {
+                agent_version: "0.1.0".into()
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn state_becomes_stale_on_disconnect() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+
+        tokio::spawn(async move { server.run(tx, Duration::from_secs(5)).await });
+
+        {
+            let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+            write_frame(&mut stream, &hello_envelope("0.1.0"))
+                .await
+                .unwrap();
+            tokio::time::timeout(Duration::from_secs(2), rx.changed())
+                .await
+                .expect("state did not transition to Connected")
+                .unwrap();
+        }
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Stale")
+            .unwrap();
+        assert_eq!(
+            *rx.borrow(),
+            ConnectionState::Stale {
+                agent_version: "0.1.0".into()
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn state_reconnects_to_connected_after_stale() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+
+        tokio::spawn(async move { server.run(tx, Duration::from_secs(5)).await });
+
+        {
+            let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+            write_frame(&mut stream, &hello_envelope("0.1.0"))
+                .await
+                .unwrap();
+            tokio::time::timeout(Duration::from_secs(2), rx.changed())
+                .await
+                .expect("state did not transition to Connected")
+                .unwrap();
+        }
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Stale")
+            .unwrap();
+        assert!(matches!(*rx.borrow(), ConnectionState::Stale { .. }));
+
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.2.0"))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not reconnect to Connected")
+            .unwrap();
+        assert_eq!(
+            *rx.borrow(),
+            ConnectionState::Connected {
+                agent_version: "0.2.0".into()
+            }
+        );
+    }
 
     #[tokio::test]
     async fn accept_hello_returns_agent_version() {
