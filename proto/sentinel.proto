@@ -21,4 +21,25 @@ message Heartbeat {}
 
 message MetricsSnapshot {
   uint64 uptime_seconds = 1;
+  CpuMetrics cpu = 2;
+  GpuMetrics gpu = 3;
+  RamMetrics ram = 4;
+}
+
+message CpuMetrics {
+  float utilization = 1;
+  float temperature = 2;
+}
+
+message GpuMetrics {
+  float utilization = 1;
+  float temperature = 2;
+  float hotspot_temperature = 3;
+  uint64 vram_used_mb = 4;
+  uint64 vram_total_mb = 5;
+}
+
+message RamMetrics {
+  uint64 used_mb = 1;
+  uint64 total_mb = 2;
 }
