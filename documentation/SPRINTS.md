@@ -89,7 +89,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] #43 — Panel: `LinkServer` accepts a TCP connection and decodes Hello
 - [x] #44 — Panel: connection state machine (Waiting → Connected → Stale)
 - [x] #45 — Build `tools/fake-agent` for UI development without hardware
-- [ ] #46 — Panel shows connection state: Waiting for PC, Connected, and Stale
+- [x] #46 — Panel shows connection state: Waiting for PC, Connected, and Stale
 - [ ] #47 — Panel displays live uptime from the agent
 - [ ] #48 — Write and deploy the panel boot service *(hardware blocked)*
 

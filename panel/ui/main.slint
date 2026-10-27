@@ -1,8 +1,50 @@
+export enum ConnectionStatus { waiting, connected, stale }
+
 export component AppWindow inherits Window {
     title: "Sentinel";
     preferred-width: 480px;
     preferred-height: 800px;
-    Text {
-        text: "Sentinel";
+
+    in property <ConnectionStatus> status: ConnectionStatus.waiting;
+    in property <string> agent-version: "";
+
+    if root.status == ConnectionStatus.waiting : VerticalLayout {
+        alignment: center;
+        Text {
+            text: "Waiting for PC";
+            horizontal-alignment: center;
+            font-size: 24px;
+        }
+    }
+
+    if root.status == ConnectionStatus.connected : VerticalLayout {
+        alignment: center;
+        Text {
+            text: "Connected";
+            color: #22c55e;
+            horizontal-alignment: center;
+            font-size: 24px;
+        }
+        Text {
+            text: root.agent-version;
+            horizontal-alignment: center;
+            font-size: 14px;
+        }
+    }
+
+    if root.status == ConnectionStatus.stale : VerticalLayout {
+        alignment: center;
+        Text {
+            text: "No signal";
+            color: #f97316;
+            horizontal-alignment: center;
+            font-size: 24px;
+        }
+        Text {
+            text: root.agent-version;
+            color: #9ca3af;
+            horizontal-alignment: center;
+            font-size: 14px;
+        }
     }
 }
