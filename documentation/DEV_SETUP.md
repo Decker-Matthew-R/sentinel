@@ -142,15 +142,21 @@ Both should report all tests passing on a clean checkout.
 
 ---
 
-## Launch the Slint window
+## Launch the dev environment
 
-To open the panel UI on your desktop:
+To open the panel UI and connect the fake-agent in one step:
+
+```bash
+./tools/scripts/dev-launch.sh
+```
+
+This builds both crates, opens the panel window in the current terminal, and launches the fake-agent in a new Terminal window. The fake-agent connects automatically once the panel is ready and sends a heartbeat every second. Use this during UI development instead of hardware.
+
+To launch the panel alone (no fake-agent):
 
 ```bash
 cargo run --manifest-path panel/Cargo.toml
 ```
-
-A window will appear titled **Sentinel**. This is the development entry point for the panel UI — no hardware required.
 
 ---
 

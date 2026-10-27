@@ -38,15 +38,21 @@ impl LinkServer {
                 _ => continue,
             };
 
+            println!("[Connected] agent: {agent_version}");
             tx.send(ConnectionState::Connected {
                 agent_version: agent_version.clone(),
             })
             .ok();
 
+            let mut count = 0u64;
             loop {
                 match timeout(heartbeat_timeout, read_frame(&mut stream)).await {
-                    Ok(Ok(_)) => {}
+                    Ok(Ok(_)) => {
+                        count += 1;
+                        println!("[Heartbeat] {count}");
+                    }
                     _ => {
+                        println!("[Stale] agent: {agent_version}");
                         tx.send(ConnectionState::Stale {
                             agent_version: agent_version.clone(),
                         })
