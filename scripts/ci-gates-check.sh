@@ -60,6 +60,12 @@ run_step "Agent — dotnet list package --vulnerable" \
   dotnet list agent/ package --vulnerable --include-transitive
 run_step "Panel — cargo audit" \
   cargo audit --file panel/Cargo.lock
+if command -v gitleaks &> /dev/null; then
+  run_step "Secret scan — gitleaks" \
+    gitleaks detect --source . --log-opts="HEAD~1..HEAD" --no-banner
+else
+  echo -e "  ${YELLOW}⚠${RESET}  gitleaks not installed — skipping secret scan (run: brew install gitleaks)"
+fi
 
 # ── Tests ───────────────────────────────────────────────────────────────────────
 header "Tests"

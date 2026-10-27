@@ -46,7 +46,23 @@ dotnet --version
 
 The version should match or exceed the one in `global.json` at the repo root. See [Toolchain versions](TECH_STACK.md#toolchain-versions).
 
-### 3. Protocol Buffers compiler
+### 3. gitleaks
+
+[gitleaks](https://github.com/gitleaks/gitleaks) scans commits for secrets and credentials. The CI pipeline runs this on every PR; the local gates check runs it before you push.
+
+```bash
+brew install gitleaks
+```
+
+Verify:
+
+```bash
+gitleaks version
+```
+
+> If gitleaks is not installed, `ci-gates-check.sh` skips the secret scan with a warning rather than failing. Install it to get full parity with CI.
+
+### 4. Protocol Buffers compiler
 
 The Rust panel build uses [prost-build](https://docs.rs/prost-build) to generate Rust types from the `.proto` schema at compile time. It requires `protoc` (the Protobuf compiler) to be on your PATH:
 
