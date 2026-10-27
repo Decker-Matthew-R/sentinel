@@ -100,7 +100,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 **Goal:** All MVP metrics flow from sensors to the tablet's state store.
 
-- [ ] #49 — Agent: define `ISensorSource` interface and in-memory fake
+- [x] #49 — Agent: define `ISensorSource` interface and in-memory fake
 - [ ] #50 — Panel: `StateStore` stores and serves current metric values
 - [ ] #51 — Panel: `StateStore` maintains ring-buffer history per metric
 - [ ] #52 — Agent: `SensorPoller` polls `ISensorSource` and streams `MetricsSnapshot`
