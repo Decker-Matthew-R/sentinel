@@ -17,7 +17,7 @@ public class LinkClientTest
 
         var clientTask = Task.Run(() =>
         {
-            var client = new LinkClient("127.0.0.1", port);
+            var client = new LinkClient("127.0.0.1", port, new SensorPoller(new FakeSensorSource()));
             return client.RunAsync(cts.Token);
         });
 

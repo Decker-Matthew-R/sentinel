@@ -3,7 +3,7 @@ using Sentinel.V1;
 
 namespace Sentinel.Agent;
 
-public class LinkClient(string host, int port)
+public class LinkClient(string host, int port, SensorPoller poller)
 {
     public async Task RunAsync(CancellationToken cancellationToken)
     {
@@ -24,10 +24,7 @@ public class LinkClient(string host, int port)
             await FrameWriter.WriteAsync(stream, new Envelope
             {
                 Version = 1,
-                MetricsSnapshot = new MetricsSnapshot
-                {
-                    UptimeSeconds = (ulong)(Environment.TickCount64 / 1000)
-                }
+                MetricsSnapshot = poller.PollOnce()
             });
         }
     }
