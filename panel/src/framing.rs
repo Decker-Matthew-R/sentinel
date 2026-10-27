@@ -1,26 +1,32 @@
-#![allow(dead_code)]
-
 use crate::proto::sentinel::v1::Envelope;
 use prost::Message;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-pub async fn write_frame<W: tokio::io::AsyncWrite + Unpin>(writer: &mut W, envelope: &Envelope) {
+#[allow(dead_code)]
+pub async fn write_frame<W: tokio::io::AsyncWrite + Unpin>(
+    writer: &mut W,
+    envelope: &Envelope,
+) -> Result<(), std::io::Error> {
     let payload = envelope.encode_to_vec();
     let length = (payload.len() as u32).to_be_bytes();
-    writer.write_all(&length).await.unwrap();
-    writer.write_all(&payload).await.unwrap();
+    writer.write_all(&length).await?;
+    writer.write_all(&payload).await?;
+    Ok(())
 }
 
-pub async fn read_frame<R: tokio::io::AsyncRead + Unpin>(reader: &mut R) -> Envelope {
+pub async fn read_frame<R: tokio::io::AsyncRead + Unpin>(
+    reader: &mut R,
+) -> Result<Envelope, std::io::Error> {
     let mut length_bytes = [0u8; 4];
-    reader.read_exact(&mut length_bytes).await.unwrap();
+    reader.read_exact(&mut length_bytes).await?;
 
     let length = u32::from_be_bytes(length_bytes) as usize;
 
     let mut payload = vec![0u8; length];
-    reader.read_exact(&mut payload).await.unwrap();
+    reader.read_exact(&mut payload).await?;
 
-    Envelope::decode(payload.as_slice()).unwrap()
+    Envelope::decode(payload.as_slice())
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))
 }
 
 #[cfg(test)]
@@ -38,10 +44,10 @@ mod tests {
         };
 
         let (mut writer, mut reader) = tokio::io::duplex(1024);
-        write_frame(&mut writer, &original).await;
+        write_frame(&mut writer, &original).await.unwrap();
         drop(writer);
 
-        let decoded = read_frame(&mut reader).await;
+        let decoded = read_frame(&mut reader).await.unwrap();
 
         assert_eq!(decoded.version, 1);
         match decoded.payload {
@@ -64,12 +70,12 @@ mod tests {
         };
 
         let (mut writer, mut reader) = tokio::io::duplex(1024);
-        write_frame(&mut writer, &first).await;
-        write_frame(&mut writer, &second).await;
+        write_frame(&mut writer, &first).await.unwrap();
+        write_frame(&mut writer, &second).await.unwrap();
         drop(writer);
 
-        let decoded_first = read_frame(&mut reader).await;
-        let decoded_second = read_frame(&mut reader).await;
+        let decoded_first = read_frame(&mut reader).await.unwrap();
+        let decoded_second = read_frame(&mut reader).await.unwrap();
 
         assert!(matches!(
             decoded_first.payload,

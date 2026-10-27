@@ -1,6 +1,5 @@
 pub mod sentinel {
     pub mod v1 {
-        #![allow(dead_code)]
         include!(concat!(env!("OUT_DIR"), "/sentinel.v1.rs"));
     }
 }
