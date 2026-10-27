@@ -8,7 +8,7 @@ public class LinkClientReconnectTest
         var delays = new List<TimeSpan>();
         var attempts = 0;
         using var cts = new CancellationTokenSource();
-        var client = new LinkClient("127.0.0.1", 0);
+        var client = new LinkClient("127.0.0.1", 0, new SensorPoller(new FakeSensorSource()));
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             client.RunWithReconnectAsync(
@@ -32,7 +32,7 @@ public class LinkClientReconnectTest
         var delays = new List<TimeSpan>();
         var attempts = 0;
         using var cts = new CancellationTokenSource();
-        var client = new LinkClient("127.0.0.1", 0);
+        var client = new LinkClient("127.0.0.1", 0, new SensorPoller(new FakeSensorSource()));
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             client.RunWithReconnectAsync(
@@ -53,7 +53,7 @@ public class LinkClientReconnectTest
     public async Task RunWithReconnectAsync_cancellation_during_delay_stops_loop()
     {
         using var cts = new CancellationTokenSource();
-        var client = new LinkClient("127.0.0.1", 0);
+        var client = new LinkClient("127.0.0.1", 0, new SensorPoller(new FakeSensorSource()));
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             client.RunWithReconnectAsync(

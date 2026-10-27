@@ -102,8 +102,8 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 - [x] #49 — Agent: define `ISensorSource` interface and in-memory fake
 - [x] #50 — Panel: `StateStore` stores and serves current metric values
-- [ ] #51 — Panel: `StateStore` maintains ring-buffer history per metric
-- [ ] #52 — Agent: `SensorPoller` polls `ISensorSource` and streams `MetricsSnapshot`
+- [x] #51 — Panel: `StateStore` maintains ring-buffer history per metric
+- [x] #52 — Agent: `SensorPoller` polls `ISensorSource` and streams `MetricsSnapshot`
 - [ ] #53 — Agent: send `Specs` message once per connection
 - [ ] #54 — Agent: integrate LibreHardwareMonitorLib as the real sensor source *(hardware blocked)*
 - [ ] #55 — Configure Task Scheduler to start the agent elevated at logon *(hardware blocked)*
