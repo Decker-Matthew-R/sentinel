@@ -327,6 +327,7 @@ mod tests {
                 version: 1,
                 payload: Some(envelope::Payload::MetricsSnapshot(MetricsSnapshot {
                     uptime_seconds: 42,
+                    ..Default::default()
                 })),
             },
         )
