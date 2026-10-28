@@ -150,12 +150,32 @@ To open the panel UI and connect the fake-agent in one step:
 ./tools/scripts/dev-launch.sh
 ```
 
-This builds both crates, opens the panel window in the current terminal, and launches the fake-agent in a new Terminal window. The fake-agent connects automatically once the panel is ready and sends a heartbeat every second. Use this during UI development instead of hardware.
+This builds both crates, opens the panel window in the current terminal, and launches the fake-agent in a new Terminal window. The fake-agent connects automatically once the panel is ready and begins streaming metric data. Use this during UI development instead of hardware.
 
 To launch the panel alone (no fake-agent):
 
 ```bash
 cargo run --manifest-path panel/Cargo.toml
+```
+
+### Fake data scenarios
+
+The fake-agent cycles through five named scenarios on an 8-second loop (40 seconds total), designed to exercise every visual state of the dashboard:
+
+| Scenario | CPU % | CPU °C | GPU % | GPU °C | Hotspot °C | VRAM | RAM |
+|---|---|---|---|---|---|---|---|
+| **Idle** | 6 | 38 | 3 | 32 | 38 | 1.2 / 16 GB | 8.5 / 32 GB |
+| **Gaming — Normal** | 45 | 62 | 78 | 72 | 84 | 8.5 / 16 GB | 14.2 / 32 GB |
+| **Gaming — Warm** | 72 | 74 | 92 | 82 | 93 | 12.0 / 16 GB | 22.1 / 32 GB |
+| **Gaming — Critical** | 95 | 91 | 99 | 93 | 105 | 15.8 / 16 GB | 28.4 / 32 GB |
+| **No GPU** | 25 | 48 | — | — | — | — | 9.2 / 32 GB |
+
+The warm and critical scenarios are tuned to straddle the threshold values used by the `ViewModels` layer, so UI threshold colours can be validated without hardware. The "No GPU" scenario drives all GPU and VRAM tiles to `--`, verifying that absent-sensor handling renders correctly.
+
+The terminal window running the fake-agent prints the active scenario and tick number so you can follow along:
+
+```
+[Gaming — Critical] tick 3/8 — uptime 26s
 ```
 
 ---

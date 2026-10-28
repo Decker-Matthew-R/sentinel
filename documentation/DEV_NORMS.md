@@ -143,9 +143,13 @@ Something broken that should work. Key fields:
 
 **C# (agent):** Tests live in `agent/tests/`. Framework is xUnit. Run with `dotnet test agent/`. Write a failing test first, then make it pass.
 
+`FakeSensorSource` and `FakeSpecsSource` live in `agent/tests/Sentinel.Agent.Tests/`, not in the production project. They are test doubles used by unit and integration tests — they do not ship in `sentinel-agent.exe`. For UI development without Windows hardware, use `tools/fake-agent` instead.
+
 **Rust (panel):** Tests live inline in the same file as the code, inside a `#[cfg(test)] mod tests` block. Run with `cargo test --manifest-path panel/Cargo.toml`. Same TDD approach.
 
-**UI testing:** Slint's `slint::testing` module supports headless component testing. Deferred until M4 when view models with real logic are introduced — there is nothing meaningful to assert against pure layout code.
+**UI testing:** Slint's `system-testing` feature enables headless component testing via `i-slint-backend-testing`. UI property assertions (default values, state mappings) run in the existing test suite in `panel/src/main.rs`. Because macOS requires the event loop on the main thread, all `AppWindow` assertions are consolidated into a single test (`ui_reflects_all_connection_states`) rather than split across multiple tests.
+
+For visual validation — threshold colours, layout, tile rendering — run `./tools/scripts/dev-launch.sh` and observe the fake-agent's scenario loop. See [Dev Setup](DEV_SETUP.md#fake-data-scenarios) for the full scenario table.
 
 **CI:** Both halves run automatically on PRs via `agent-gates.yml` and `panel-gates.yml` (format, lint, CVE scan, build, test). `secret-scan.yml` scans every PR for secrets and credentials. `scheduled-cve-scan.yml` runs daily and on demand to catch newly published CVEs in existing dependencies. Run `./scripts/ci-gates-check.sh` locally before pushing for a faster feedback loop.
 
