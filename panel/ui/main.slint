@@ -1,9 +1,12 @@
+import { Palette, Typography } from "tokens.slint";
+
 export enum ConnectionStatus { waiting, connected, stale }
 
 export component AppWindow inherits Window {
     title: "Sentinel";
     preferred-width: 480px;
     preferred-height: 800px;
+    background: Palette.background;
 
     in property <ConnectionStatus> status: ConnectionStatus.waiting;
     in property <string> agent-version: "";
@@ -13,8 +16,9 @@ export component AppWindow inherits Window {
         alignment: center;
         Text {
             text: "Waiting for PC";
+            color: Palette.text-primary;
             horizontal-alignment: center;
-            font-size: 24px;
+            font-size: Typography.heading;
         }
     }
 
@@ -22,19 +26,21 @@ export component AppWindow inherits Window {
         alignment: center;
         Text {
             text: "Connected";
-            color: #22c55e;
+            color: Palette.success;
             horizontal-alignment: center;
-            font-size: 24px;
+            font-size: Typography.heading;
         }
         Text {
             text: root.agent-version;
+            color: Palette.text-primary;
             horizontal-alignment: center;
-            font-size: 14px;
+            font-size: Typography.caption;
         }
         Text {
             text: root.uptime;
+            color: Palette.text-primary;
             horizontal-alignment: center;
-            font-size: 14px;
+            font-size: Typography.caption;
         }
     }
 
@@ -42,15 +48,15 @@ export component AppWindow inherits Window {
         alignment: center;
         Text {
             text: "No signal";
-            color: #f97316;
+            color: Palette.warning;
             horizontal-alignment: center;
-            font-size: 24px;
+            font-size: Typography.heading;
         }
         Text {
             text: root.agent-version;
-            color: #9ca3af;
+            color: Palette.text-secondary;
             horizontal-alignment: center;
-            font-size: 14px;
+            font-size: Typography.caption;
         }
     }
 }
