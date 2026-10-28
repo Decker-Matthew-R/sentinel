@@ -12,6 +12,10 @@ use tokio::sync::watch;
 
 slint::include_modules!();
 
+fn format_metric(v: f32) -> String {
+    format!("{:.1}", v)
+}
+
 fn format_uptime(seconds: u64) -> String {
     let days = seconds / 86400;
     let hours = (seconds % 86400) / 3600;
@@ -51,7 +55,7 @@ fn to_slint_props(state: &ConnectionState) -> (ConnectionStatus, String, String)
 async fn main() {
     let server = LinkServer::bind(9000).await.unwrap();
     let (tx, rx) = watch::channel(ConnectionState::Waiting);
-    let (store, _store_rx) = StateStore::new();
+    let (store, mut store_rx) = StateStore::new();
 
     tokio::spawn(async move {
         server.run(tx, &store, Duration::from_secs(5)).await;
@@ -59,6 +63,7 @@ async fn main() {
 
     let app = AppWindow::new().unwrap();
     let app_weak = app.as_weak();
+    let app_weak2 = app.as_weak();
 
     tokio::spawn(async move {
         let mut rx = rx;
@@ -74,6 +79,52 @@ async fn main() {
                     app.set_status(status);
                     app.set_agent_version(version.into());
                     app.set_uptime(uptime.into());
+                }
+            });
+        }
+    });
+
+    tokio::spawn(async move {
+        loop {
+            if store_rx.changed().await.is_err() {
+                break;
+            }
+            let snapshot = *store_rx.borrow();
+            let handle = app_weak2.clone();
+            let _ = slint::invoke_from_event_loop(move || {
+                if let Some(app) = handle.upgrade() {
+                    match snapshot {
+                        Some(m) => {
+                            if let Some(cpu) = m.cpu {
+                                app.set_cpu_utilization(format_metric(cpu.utilization).into());
+                                app.set_cpu_temperature(format_metric(cpu.temperature).into());
+                            }
+                            if let Some(gpu) = m.gpu {
+                                app.set_gpu_utilization(format_metric(gpu.utilization).into());
+                                app.set_gpu_temperature(format_metric(gpu.temperature).into());
+                                app.set_gpu_hotspot_temperature(
+                                    format_metric(gpu.hotspot_temperature).into(),
+                                );
+                                app.set_gpu_vram_used_gb(
+                                    format_metric(gpu.vram_used_mb as f32 / 1024.0).into(),
+                                );
+                            }
+                            if let Some(ram) = m.ram {
+                                app.set_ram_used_gb(
+                                    format_metric(ram.used_mb as f32 / 1024.0).into(),
+                                );
+                            }
+                        }
+                        None => {
+                            app.set_cpu_utilization("--".into());
+                            app.set_cpu_temperature("--".into());
+                            app.set_gpu_utilization("--".into());
+                            app.set_gpu_temperature("--".into());
+                            app.set_gpu_hotspot_temperature("--".into());
+                            app.set_gpu_vram_used_gb("--".into());
+                            app.set_ram_used_gb("--".into());
+                        }
+                    }
                 }
             });
         }
@@ -101,6 +152,16 @@ mod tests {
     fn panel_tests_run() {}
 
     #[test]
+    fn format_metric_one_decimal_place() {
+        assert_eq!(format_metric(42.0), "42.0");
+    }
+
+    #[test]
+    fn format_metric_rounds_correctly() {
+        assert_eq!(format_metric(3.14159), "3.1");
+    }
+
+    #[test]
     fn ui_reflects_all_connection_states() {
         init_slint_once();
         let app = AppWindow::new().unwrap();
@@ -108,6 +169,13 @@ mod tests {
         assert_eq!(app.get_status(), ConnectionStatus::Waiting);
         assert_eq!(app.get_agent_version().as_str(), "");
         assert_eq!(app.get_uptime().as_str(), "");
+        assert_eq!(app.get_cpu_utilization().as_str(), "--");
+        assert_eq!(app.get_cpu_temperature().as_str(), "--");
+        assert_eq!(app.get_gpu_utilization().as_str(), "--");
+        assert_eq!(app.get_gpu_temperature().as_str(), "--");
+        assert_eq!(app.get_gpu_hotspot_temperature().as_str(), "--");
+        assert_eq!(app.get_gpu_vram_used_gb().as_str(), "--");
+        assert_eq!(app.get_ram_used_gb().as_str(), "--");
 
         let (status, version, uptime) = to_slint_props(&ConnectionState::Connected {
             agent_version: "fake-1.0.0".into(),
