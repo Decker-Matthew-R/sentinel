@@ -1,0 +1,41 @@
+import { Palette, Typography } from "tokens.slint";
+
+export component MetricTile inherits Rectangle {
+    in property <string> label: "";
+    in property <string> value: "--";
+    in property <string> unit: "";
+
+    background: Palette.surface;
+    border-radius: 8px;
+    min-height: 88px;
+
+    VerticalLayout {
+        padding: 12px;
+        spacing: 6px;
+        alignment: start;
+
+        Text {
+            text: root.label;
+            color: Palette.text-secondary;
+            font-size: Typography.caption;
+        }
+
+        HorizontalLayout {
+            spacing: 4px;
+            alignment: start;
+
+            Text {
+                text: root.value;
+                color: Palette.text-primary;
+                font-size: Typography.value;
+            }
+
+            Text {
+                text: root.unit;
+                color: Palette.text-secondary;
+                font-size: Typography.body;
+                vertical-alignment: bottom;
+            }
+        }
+    }
+}

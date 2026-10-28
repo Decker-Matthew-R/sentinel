@@ -1,4 +1,5 @@
 import { Palette, Typography } from "tokens.slint";
+import { MetricTile } from "tile.slint";
 
 export enum ConnectionStatus { waiting, connected, stale }
 
@@ -12,6 +13,14 @@ export component AppWindow inherits Window {
     in property <string> agent-version: "";
     in property <string> uptime: "";
 
+    in property <string> cpu-utilization: "--";
+    in property <string> cpu-temperature: "--";
+    in property <string> gpu-utilization: "--";
+    in property <string> gpu-temperature: "--";
+    in property <string> gpu-hotspot-temperature: "--";
+    in property <string> gpu-vram-used-gb: "--";
+    in property <string> ram-used-gb: "--";
+
     if root.status == ConnectionStatus.waiting : VerticalLayout {
         alignment: center;
         Text {
@@ -23,24 +32,44 @@ export component AppWindow inherits Window {
     }
 
     if root.status == ConnectionStatus.connected : VerticalLayout {
-        alignment: center;
-        Text {
-            text: "Connected";
-            color: Palette.success;
-            horizontal-alignment: center;
-            font-size: Typography.heading;
+        padding: 16px;
+        spacing: 8px;
+
+        HorizontalLayout {
+            Text {
+                text: root.agent-version;
+                color: Palette.success;
+                font-size: Typography.caption;
+                horizontal-stretch: 1;
+            }
+            Text {
+                text: root.uptime;
+                color: Palette.text-secondary;
+                font-size: Typography.caption;
+                horizontal-alignment: right;
+            }
         }
-        Text {
-            text: root.agent-version;
-            color: Palette.text-primary;
-            horizontal-alignment: center;
-            font-size: Typography.caption;
+
+        HorizontalLayout {
+            spacing: 8px;
+            MetricTile { label: "CPU"; value: root.cpu-utilization; unit: "%"; horizontal-stretch: 1; }
+            MetricTile { label: "CPU Temp"; value: root.cpu-temperature; unit: "°C"; horizontal-stretch: 1; }
         }
-        Text {
-            text: root.uptime;
-            color: Palette.text-primary;
-            horizontal-alignment: center;
-            font-size: Typography.caption;
+
+        HorizontalLayout {
+            spacing: 8px;
+            MetricTile { label: "GPU"; value: root.gpu-utilization; unit: "%"; horizontal-stretch: 1; }
+            MetricTile { label: "GPU Temp"; value: root.gpu-temperature; unit: "°C"; horizontal-stretch: 1; }
+        }
+
+        HorizontalLayout {
+            spacing: 8px;
+            MetricTile { label: "Hotspot"; value: root.gpu-hotspot-temperature; unit: "°C"; horizontal-stretch: 1; }
+            MetricTile { label: "VRAM"; value: root.gpu-vram-used-gb; unit: "GB"; horizontal-stretch: 1; }
+        }
+
+        HorizontalLayout {
+            MetricTile { label: "RAM"; value: root.ram-used-gb; unit: "GB"; horizontal-stretch: 1; }
         }
     }
 
