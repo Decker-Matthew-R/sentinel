@@ -96,7 +96,7 @@ Runs as a **user-session tray app** started at logon by Task Scheduler with high
 |---|---|
 | `LinkServer` | Listens on the USB network interface, authenticates the agent, decodes frames |
 | `StateStore` | Current values, ~60 s ring-buffer history per metric, connection state |
-| `ViewModels` | Pure logic: unit formatting, threshold colors (normal / warm / hot), staleness |
+| `ViewModels` | Pure logic: unit formatting, threshold colors (normal / warm / hot), utilization percentages |
 | Slint UI | Renders directly to the display via KMS/DRM — no X11/Wayland compositor |
 
 Threading: the Slint event loop owns the main thread; a tokio runtime handles networking; updates cross to the UI via `slint::invoke_from_event_loop`.

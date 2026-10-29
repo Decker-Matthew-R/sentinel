@@ -117,7 +117,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 - [x] #56 — Define color system, typography, and dark theme tokens in Slint
 - [x] #57 — Dashboard layout with metric tiles displaying live values
-- [ ] #58 — `ViewModels` compute threshold colors for metric states
+- [x] #58 — `ViewModels` compute threshold colors for metric states
 - [ ] #59 — Sparkline charts render ring-buffer history on each tile
 - [ ] #60 — Specs panel and polished connection state screens
 - [ ] #61 — Rotation and brightness settings *(hardware blocked)*

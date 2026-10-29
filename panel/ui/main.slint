@@ -1,11 +1,11 @@
 import { Palette, Typography } from "tokens.slint";
-import { MetricTile } from "tile.slint";
+import { MetricTile, TileState } from "tile.slint";
 
 export enum ConnectionStatus { waiting, connected, stale }
 
 export component AppWindow inherits Window {
     title: "Sentinel";
-    preferred-width: 480px;
+    preferred-width: 1280px;
     preferred-height: 800px;
     background: Palette.background;
 
@@ -21,8 +21,23 @@ export component AppWindow inherits Window {
     in property <string> gpu-vram-used-gb: "--";
     in property <string> ram-used-gb: "--";
 
+    in property <TileState> cpu-temperature-state: TileState.normal;
+    in property <TileState> gpu-temperature-state: TileState.normal;
+    in property <TileState> gpu-hotspot-state: TileState.normal;
+    in property <TileState> vram-state: TileState.normal;
+    in property <TileState> ram-state: TileState.normal;
+
+    in property <string> vram-utilization: "--";
+    in property <string> ram-utilization: "--";
+
     if root.status == ConnectionStatus.waiting : VerticalLayout {
         alignment: center;
+        spacing: 8px;
+        Text {
+            text: "⏳";
+            horizontal-alignment: center;
+            font-size: 48px;
+        }
         Text {
             text: "Waiting for PC";
             color: Palette.text-primary;
@@ -33,7 +48,8 @@ export component AppWindow inherits Window {
 
     if root.status == ConnectionStatus.connected : VerticalLayout {
         padding: 16px;
-        spacing: 8px;
+        spacing: 16px;
+        alignment: start;
 
         HorizontalLayout {
             Text {
@@ -50,31 +66,63 @@ export component AppWindow inherits Window {
             }
         }
 
-        HorizontalLayout {
+        VerticalLayout {
             spacing: 8px;
-            MetricTile { label: "CPU"; value: root.cpu-utilization; unit: "%"; horizontal-stretch: 1; }
-            MetricTile { label: "CPU Temp"; value: root.cpu-temperature; unit: "°C"; horizontal-stretch: 1; }
+            alignment: start;
+            Text {
+                text: "CPU";
+                color: Palette.text-secondary;
+                font-size: Typography.body;
+            }
+            HorizontalLayout {
+                spacing: 8px;
+                MetricTile { label: "Usage"; value: root.cpu-utilization; unit: "%"; width: (parent.width - 8px) / 2; }
+                MetricTile { label: "Temperature"; value: root.cpu-temperature; unit: "°C"; state: root.cpu-temperature-state; width: (parent.width - 8px) / 2; }
+            }
         }
 
-        HorizontalLayout {
+        VerticalLayout {
             spacing: 8px;
-            MetricTile { label: "GPU"; value: root.gpu-utilization; unit: "%"; horizontal-stretch: 1; }
-            MetricTile { label: "GPU Temp"; value: root.gpu-temperature; unit: "°C"; horizontal-stretch: 1; }
+            alignment: start;
+            Text {
+                text: "GPU";
+                color: Palette.text-secondary;
+                font-size: Typography.body;
+            }
+            HorizontalLayout {
+                spacing: 8px;
+                MetricTile { label: "Usage"; value: root.gpu-utilization; unit: "%"; width: (parent.width - 8px) / 2; }
+                MetricTile { label: "Temperature"; value: root.gpu-temperature; unit: "°C"; state: root.gpu-temperature-state; width: (parent.width - 8px) / 2; }
+            }
+            HorizontalLayout {
+                spacing: 8px;
+                MetricTile { label: "Hotspot"; value: root.gpu-hotspot-temperature; unit: "°C"; state: root.gpu-hotspot-state; width: (parent.width - 8px) / 2; }
+                MetricTile { label: "VRAM"; value: root.gpu-vram-used-gb; unit: "GB"; sub-value: root.vram-utilization; state: root.vram-state; width: (parent.width - 8px) / 2; }
+            }
         }
 
-        HorizontalLayout {
+        VerticalLayout {
             spacing: 8px;
-            MetricTile { label: "Hotspot"; value: root.gpu-hotspot-temperature; unit: "°C"; horizontal-stretch: 1; }
-            MetricTile { label: "VRAM"; value: root.gpu-vram-used-gb; unit: "GB"; horizontal-stretch: 1; }
-        }
-
-        HorizontalLayout {
-            MetricTile { label: "RAM"; value: root.ram-used-gb; unit: "GB"; horizontal-stretch: 1; }
+            alignment: start;
+            Text {
+                text: "RAM";
+                color: Palette.text-secondary;
+                font-size: Typography.body;
+            }
+            HorizontalLayout {
+                MetricTile { label: "Memory"; value: root.ram-used-gb; unit: "GB"; sub-value: root.ram-utilization; state: root.ram-state; horizontal-stretch: 1; }
+            }
         }
     }
 
     if root.status == ConnectionStatus.stale : VerticalLayout {
         alignment: center;
+        spacing: 8px;
+        Text {
+            text: "⚠️";
+            horizontal-alignment: center;
+            font-size: 48px;
+        }
         Text {
             text: "No signal";
             color: Palette.warning;

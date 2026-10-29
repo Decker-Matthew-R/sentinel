@@ -1,23 +1,42 @@
 import { Palette, Typography } from "tokens.slint";
 
+export enum TileState { normal, warm, hot }
+
 export component MetricTile inherits Rectangle {
     in property <string> label: "";
     in property <string> value: "--";
     in property <string> unit: "";
+    in property <string> sub-value: "";
+    in property <TileState> state: TileState.normal;
 
+    property <color> value-color: root.state == TileState.hot ? Palette.error :
+                                   root.state == TileState.warm ? Palette.warning :
+                                   Palette.cool;
+
+    min-width: 0;
     background: Palette.surface;
     border-radius: 8px;
-    min-height: 88px;
+    border-width: 1px;
+    border-color: Palette.border;
+    height: 130px;
 
     VerticalLayout {
         padding: 12px;
         spacing: 6px;
-        alignment: start;
 
-        Text {
-            text: root.label;
-            color: Palette.text-secondary;
-            font-size: Typography.caption;
+        HorizontalLayout {
+            spacing: 4px;
+            Text {
+                text: root.label;
+                color: Palette.text-secondary;
+                font-size: Typography.caption;
+                horizontal-stretch: 1;
+            }
+            Text {
+                text: root.state == TileState.hot ? "🔥" :
+                      root.state == TileState.warm ? "⚠️" : "❄️";
+                font-size: Typography.caption;
+            }
         }
 
         HorizontalLayout {
@@ -26,7 +45,7 @@ export component MetricTile inherits Rectangle {
 
             Text {
                 text: root.value;
-                color: Palette.text-primary;
+                color: root.value-color;
                 font-size: Typography.value;
             }
 
@@ -36,6 +55,14 @@ export component MetricTile inherits Rectangle {
                 font-size: Typography.body;
                 vertical-alignment: bottom;
             }
+        }
+
+        Rectangle { vertical-stretch: 1; }
+
+        if root.sub-value != "" : Text {
+            text: root.sub-value;
+            color: root.value-color;
+            font-size: Typography.body;
         }
     }
 }
