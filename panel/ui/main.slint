@@ -54,19 +54,31 @@ export component AppWindow inherits Window {
     in property <string> ram-warm: "";
     in property <string> ram-hot: "";
 
+    in property <string> cpu-name: "";
+    in property <string> cpu-cores-threads: "";
+    in property <string> cpu-boost-clock: "";
+    in property <string> gpu-name: "";
+    in property <string> gpu-vram-total: "";
+    in property <string> ram-name: "";
+    in property <string> ram-total: "";
+    in property <string> ram-speed: "";
+    in property <string> os-version: "";
+    in-out property <bool> show-specs: false;
+
     if root.status == ConnectionStatus.waiting : VerticalLayout {
         alignment: center;
-        spacing: 8px;
+        spacing: 16px;
         Text {
-            text: "⏳";
-            horizontal-alignment: center;
-            font-size: 48px;
-        }
-        Text {
-            text: "Waiting for PC";
+            text: "SENTINEL";
             color: Palette.text-primary;
             horizontal-alignment: center;
             font-size: Typography.heading;
+        }
+        Text {
+            text: "Waiting for PC...";
+            color: Palette.text-secondary;
+            horizontal-alignment: center;
+            font-size: Typography.body;
         }
     }
 
@@ -76,6 +88,7 @@ export component AppWindow inherits Window {
         alignment: start;
 
         HorizontalLayout {
+            spacing: 12px;
             Text {
                 text: root.agent-version;
                 color: Palette.success;
@@ -86,17 +99,37 @@ export component AppWindow inherits Window {
                 text: root.uptime;
                 color: Palette.text-secondary;
                 font-size: Typography.caption;
-                horizontal-alignment: right;
+            }
+            Rectangle {
+                specs-ta := TouchArea {
+                    clicked => { root.show-specs = true; }
+                }
+                Text {
+                    text: "Specs →";
+                    color: specs-ta.has-hover ? Palette.text-primary : Palette.text-secondary;
+                    font-size: Typography.caption;
+                    vertical-alignment: center;
+                }
             }
         }
 
         VerticalLayout {
             spacing: 8px;
             alignment: start;
-            Text {
-                text: "CPU";
-                color: Palette.text-secondary;
-                font-size: Typography.body;
+            HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+                Text {
+                    text: "CPU";
+                    color: Palette.text-secondary;
+                    font-size: Typography.body;
+                }
+                if root.cpu-name != "" : Text {
+                    text: "· " + root.cpu-name;
+                    color: Palette.text-secondary;
+                    font-size: Typography.caption;
+                    vertical-alignment: bottom;
+                }
             }
             HorizontalLayout {
                 spacing: 8px;
@@ -123,10 +156,20 @@ export component AppWindow inherits Window {
         VerticalLayout {
             spacing: 8px;
             alignment: start;
-            Text {
-                text: "GPU";
-                color: Palette.text-secondary;
-                font-size: Typography.body;
+            HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+                Text {
+                    text: "GPU";
+                    color: Palette.text-secondary;
+                    font-size: Typography.body;
+                }
+                if root.gpu-name != "" : Text {
+                    text: "· " + root.gpu-name;
+                    color: Palette.text-secondary;
+                    font-size: Typography.caption;
+                    vertical-alignment: bottom;
+                }
             }
             HorizontalLayout {
                 spacing: 8px;
@@ -194,14 +237,15 @@ export component AppWindow inherits Window {
 
     if root.status == ConnectionStatus.stale : VerticalLayout {
         alignment: center;
-        spacing: 8px;
+        spacing: 12px;
         Text {
-            text: "⚠️";
+            text: "⚠";
+            color: Palette.warning;
             horizontal-alignment: center;
             font-size: 48px;
         }
         Text {
-            text: "No signal";
+            text: "Connection lost";
             color: Palette.warning;
             horizontal-alignment: center;
             font-size: Typography.heading;
@@ -211,6 +255,116 @@ export component AppWindow inherits Window {
             color: Palette.text-secondary;
             horizontal-alignment: center;
             font-size: Typography.caption;
+        }
+    }
+
+    if root.show-specs : Rectangle {
+        background: Palette.background;
+
+        VerticalLayout {
+            padding: 24px;
+            spacing: 20px;
+
+            HorizontalLayout {
+                Rectangle {
+                    width: 64px;
+                    height: 28px;
+                    border-radius: 4px;
+                    border-width: 1px;
+                    border-color: Palette.border;
+                    back-ta := TouchArea {
+                        clicked => { root.show-specs = false; }
+                    }
+                    Text {
+                        text: "← Back";
+                        color: back-ta.has-hover ? Palette.text-primary : Palette.text-secondary;
+                        font-size: Typography.caption;
+                        width: parent.width;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+                Text {
+                    text: "SPECS";
+                    color: Palette.text-primary;
+                    font-size: Typography.heading;
+                    horizontal-stretch: 1;
+                    horizontal-alignment: center;
+                }
+                Rectangle { width: 64px; }
+            }
+
+            HorizontalLayout {
+                spacing: 16px;
+
+                Rectangle {
+                    width: (parent.width - 16px) / 2;
+                    background: Palette.surface;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: Palette.border;
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 6px;
+                        alignment: start;
+                        Text { text: "CPU"; color: Palette.text-secondary; font-size: Typography.caption; }
+                        Text { text: root.cpu-name; color: Palette.text-primary; font-size: Typography.body; }
+                        Text { text: root.cpu-cores-threads; color: Palette.text-secondary; font-size: Typography.caption; }
+                        Text { text: root.cpu-boost-clock; color: Palette.text-secondary; font-size: Typography.caption; }
+                    }
+                }
+
+                Rectangle {
+                    width: (parent.width - 16px) / 2;
+                    background: Palette.surface;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: Palette.border;
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 6px;
+                        alignment: start;
+                        Text { text: "GPU"; color: Palette.text-secondary; font-size: Typography.caption; }
+                        Text { text: root.gpu-name; color: Palette.text-primary; font-size: Typography.body; }
+                        Text { text: root.gpu-vram-total + " VRAM"; color: Palette.text-secondary; font-size: Typography.caption; }
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 16px;
+
+                Rectangle {
+                    width: (parent.width - 16px) / 2;
+                    background: Palette.surface;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: Palette.border;
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 6px;
+                        alignment: start;
+                        Text { text: "RAM"; color: Palette.text-secondary; font-size: Typography.caption; }
+                        Text { text: root.ram-name; color: Palette.text-primary; font-size: Typography.body; }
+                        Text { text: root.ram-total + " · " + root.ram-speed; color: Palette.text-secondary; font-size: Typography.caption; }
+                    }
+                }
+
+                Rectangle {
+                    width: (parent.width - 16px) / 2;
+                    background: Palette.surface;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: Palette.border;
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 6px;
+                        alignment: start;
+                        Text { text: "SYSTEM"; color: Palette.text-secondary; font-size: Typography.caption; }
+                        Text { text: root.os-version; color: Palette.text-primary; font-size: Typography.body; }
+                    }
+                }
+            }
         }
     }
 }

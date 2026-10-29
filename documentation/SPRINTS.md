@@ -1,6 +1,6 @@
 # Roadmap — Sentinel
 
-> Status: **In progress** — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 in progress — #56–59 complete, #60 unblocked. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
+> Status: **In progress** — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 functionally complete — #56–60 done, #61 hardware blocked. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
 
 ## Goals of the project
 
@@ -119,7 +119,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] #57 — Dashboard layout with metric tiles displaying live values
 - [x] #58 — `ViewModels` compute threshold colors for metric states
 - [x] #59 — Sparkline charts render ring-buffer history on each tile
-- [ ] #60 — Specs panel and polished connection state screens
+- [x] #60 — Specs panel and polished connection state screens
 - [ ] #61 — Rotation and brightness settings *(hardware blocked)*
 
 **Outcomes:** A dashboard you want to look at; all connection states designed, not accidental.

@@ -1,4 +1,4 @@
-use crate::proto::sentinel::v1::MetricsSnapshot;
+use crate::proto::sentinel::v1::{MetricsSnapshot, Specs};
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use tokio::sync::watch;
@@ -91,17 +91,31 @@ impl MetricHistories {
 
 pub struct StateStore {
     tx: watch::Sender<Option<MetricsSnapshot>>,
+    specs_tx: watch::Sender<Option<Specs>>,
+    #[allow(dead_code)]
+    specs_rx: watch::Receiver<Option<Specs>>,
     histories: Mutex<MetricHistories>,
 }
 
 impl StateStore {
     pub fn new() -> (Self, watch::Receiver<Option<MetricsSnapshot>>) {
         let (tx, rx) = watch::channel(None);
+        let (specs_tx, specs_rx) = watch::channel(None);
         let store = Self {
             tx,
+            specs_tx,
+            specs_rx,
             histories: Mutex::new(MetricHistories::new(HISTORY_CAPACITY)),
         };
         (store, rx)
+    }
+
+    pub fn update_specs(&self, specs: Specs) {
+        self.specs_tx.send(Some(specs)).ok();
+    }
+
+    pub fn subscribe_specs(&self) -> watch::Receiver<Option<Specs>> {
+        self.specs_tx.subscribe()
     }
 
     pub fn update(&self, snapshot: MetricsSnapshot) {
@@ -112,6 +126,7 @@ impl StateStore {
     pub fn clear(&self) {
         self.histories.lock().unwrap().clear();
         self.tx.send(None).ok();
+        self.specs_tx.send(None).ok();
     }
 
     #[allow(dead_code)]
@@ -274,5 +289,33 @@ mod tests {
         assert!(h.cpu_utilization.is_empty());
         assert!(h.gpu_utilization.is_empty());
         assert!(h.ram_used_mb.is_empty());
+    }
+
+    #[test]
+    fn specs_starts_as_none() {
+        let (store, _rx) = StateStore::new();
+        assert!(store.subscribe_specs().borrow().is_none());
+    }
+
+    #[test]
+    fn update_specs_stores_specs() {
+        let (store, _rx) = StateStore::new();
+        store.update_specs(Specs {
+            cpu_name: "Test CPU".into(),
+            ..Default::default()
+        });
+        let specs_rx = store.subscribe_specs();
+        assert_eq!(specs_rx.borrow().as_ref().unwrap().cpu_name, "Test CPU");
+    }
+
+    #[test]
+    fn clear_also_clears_specs() {
+        let (store, _rx) = StateStore::new();
+        store.update_specs(Specs {
+            cpu_name: "Test CPU".into(),
+            ..Default::default()
+        });
+        store.clear();
+        assert!(store.subscribe_specs().borrow().is_none());
     }
 }

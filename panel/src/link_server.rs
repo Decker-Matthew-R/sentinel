@@ -56,13 +56,19 @@ impl LinkServer {
                 match timeout(heartbeat_timeout, read_frame(&mut stream)).await {
                     Ok(Ok(envelope)) => {
                         count += 1;
-                        if let Some(envelope::Payload::MetricsSnapshot(m)) = envelope.payload {
-                            tx.send(ConnectionState::Connected {
-                                agent_version: agent_version.clone(),
-                                uptime_seconds: m.uptime_seconds,
-                            })
-                            .ok();
-                            store.update(m);
+                        match envelope.payload {
+                            Some(envelope::Payload::MetricsSnapshot(m)) => {
+                                tx.send(ConnectionState::Connected {
+                                    agent_version: agent_version.clone(),
+                                    uptime_seconds: m.uptime_seconds,
+                                })
+                                .ok();
+                                store.update(m);
+                            }
+                            Some(envelope::Payload::Specs(s)) => {
+                                store.update_specs(s);
+                            }
+                            _ => {}
                         }
                         println!("[Heartbeat] {count}");
                     }
@@ -100,7 +106,7 @@ mod tests {
     use crate::connection_state::ConnectionState;
     use crate::framing::write_frame;
     use crate::proto::sentinel::v1::{
-        CpuMetrics, Envelope, Heartbeat, Hello, MetricsSnapshot, envelope,
+        CpuMetrics, Envelope, Heartbeat, Hello, MetricsSnapshot, Specs, envelope,
     };
     use crate::state_store::StateStore;
     use std::sync::Arc;
@@ -456,6 +462,99 @@ mod tests {
             .expect("store was not updated")
             .unwrap();
         assert_eq!(store_rx.borrow().as_ref().unwrap().uptime_seconds, 99);
+    }
+
+    #[tokio::test]
+    async fn specs_message_is_stored_in_state_store() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
+        let store = Arc::new(store);
+        let mut specs_rx = store.subscribe_specs();
+
+        tokio::spawn({
+            let store = Arc::clone(&store);
+            async move { server.run(tx, &store, Duration::from_secs(5)).await }
+        });
+
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected")
+            .unwrap();
+
+        write_frame(
+            &mut stream,
+            &Envelope {
+                version: 1,
+                payload: Some(envelope::Payload::Specs(Specs {
+                    cpu_name: "Test CPU".into(),
+                    ..Default::default()
+                })),
+            },
+        )
+        .await
+        .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), specs_rx.changed())
+            .await
+            .expect("specs were not stored in state store")
+            .unwrap();
+        assert_eq!(specs_rx.borrow().as_ref().unwrap().cpu_name, "Test CPU");
+    }
+
+    #[tokio::test]
+    async fn specs_cleared_on_disconnect() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
+        let store = Arc::new(store);
+        let mut specs_rx = store.subscribe_specs();
+
+        tokio::spawn({
+            let store = Arc::clone(&store);
+            async move { server.run(tx, &store, Duration::from_secs(5)).await }
+        });
+
+        {
+            let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+            write_frame(&mut stream, &hello_envelope("0.1.0"))
+                .await
+                .unwrap();
+            tokio::time::timeout(Duration::from_secs(2), rx.changed())
+                .await
+                .expect("state did not transition to Connected")
+                .unwrap();
+            write_frame(
+                &mut stream,
+                &Envelope {
+                    version: 1,
+                    payload: Some(envelope::Payload::Specs(Specs {
+                        cpu_name: "Test CPU".into(),
+                        ..Default::default()
+                    })),
+                },
+            )
+            .await
+            .unwrap();
+            tokio::time::timeout(Duration::from_secs(2), specs_rx.changed())
+                .await
+                .expect("specs were not stored")
+                .unwrap();
+            assert!(specs_rx.borrow().is_some());
+        }
+
+        tokio::time::timeout(Duration::from_secs(2), specs_rx.changed())
+            .await
+            .expect("specs were not cleared on disconnect")
+            .unwrap();
+        assert!(specs_rx.borrow().is_none());
     }
 
     #[tokio::test]

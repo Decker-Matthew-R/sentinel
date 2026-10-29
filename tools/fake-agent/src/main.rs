@@ -157,6 +157,12 @@ pub async fn run(addr: &str) -> Result<(), std::io::Error> {
                 gpu_name: "Fake GPU RTX 9090".into(),
                 ram_total_mb: 32768,
                 os_version: "Fake OS 1.0".into(),
+                cpu_core_count: 24,
+                cpu_thread_count: 32,
+                cpu_boost_clock_mhz: 5800,
+                gpu_vram_total_mb: 16384,
+                ram_speed_mhz: 6000,
+                ram_name: "Fake RAM DDR5-6000".into(),
             })),
         },
     )
@@ -281,6 +287,41 @@ mod tests {
             third.payload,
             Some(envelope::Payload::MetricsSnapshot(_))
         ));
+    }
+
+    #[tokio::test]
+    async fn fake_agent_specs_fields_are_populated() {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+
+        tokio::spawn(async move { run(&format!("127.0.0.1:{port}")).await.ok() });
+
+        let (mut stream, _) = listener.accept().await.unwrap();
+
+        let _hello = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
+            .await
+            .expect("Hello not received");
+
+        let specs_envelope =
+            tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
+                .await
+                .expect("Specs not received");
+
+        match specs_envelope.payload {
+            Some(envelope::Payload::Specs(s)) => {
+                assert!(!s.cpu_name.is_empty());
+                assert!(!s.gpu_name.is_empty());
+                assert!(s.ram_total_mb > 0);
+                assert!(!s.os_version.is_empty());
+                assert!(s.cpu_core_count > 0);
+                assert!(s.cpu_thread_count > 0);
+                assert!(s.cpu_boost_clock_mhz > 0);
+                assert!(s.gpu_vram_total_mb > 0);
+                assert!(s.ram_speed_mhz > 0);
+                assert!(!s.ram_name.is_empty());
+            }
+            _ => panic!("expected Specs payload"),
+        }
     }
 
     #[tokio::test]
