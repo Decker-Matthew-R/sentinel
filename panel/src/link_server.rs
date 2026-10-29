@@ -99,9 +99,13 @@ mod tests {
     use super::*;
     use crate::connection_state::ConnectionState;
     use crate::framing::write_frame;
-    use crate::proto::sentinel::v1::{Envelope, Heartbeat, Hello, MetricsSnapshot, envelope};
+    use crate::proto::sentinel::v1::{
+        CpuMetrics, Envelope, Heartbeat, Hello, MetricsSnapshot, envelope,
+    };
     use crate::state_store::StateStore;
+    use std::sync::Arc;
     use std::time::Duration;
+    use tokio::io::AsyncWriteExt;
     use tokio::net::TcpStream;
     use tokio::sync::watch;
 
@@ -112,12 +116,6 @@ mod tests {
                 agent_version: version.into(),
             })),
         }
-    }
-
-    #[test]
-    fn state_starts_as_waiting() {
-        let (_, rx) = watch::channel(ConnectionState::Waiting);
-        assert_eq!(*rx.borrow(), ConnectionState::Waiting);
     }
 
     #[tokio::test]
@@ -253,36 +251,15 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn accept_hello_returns_agent_version() {
+    async fn run_skips_non_hello_first_frame_and_accepts_next() {
         let server = LinkServer::bind(0).await.unwrap();
         let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
 
-        let client_task = tokio::spawn(async move {
-            let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
-            write_frame(
-                &mut stream,
-                &Envelope {
-                    version: 1,
-                    payload: Some(envelope::Payload::Hello(Hello {
-                        agent_version: "0.1.0".into(),
-                    })),
-                },
-            )
-            .await
-            .unwrap();
-        });
+        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
 
-        let result = server.accept_hello().await.unwrap();
-        assert_eq!(result, "0.1.0");
-        client_task.await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn non_hello_first_frame_is_rejected() {
-        let server = LinkServer::bind(0).await.unwrap();
-        let port = server.local_port();
-
-        tokio::spawn(async move {
+        {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
             write_frame(
                 &mut stream,
@@ -293,27 +270,108 @@ mod tests {
             )
             .await
             .unwrap();
-        });
+        }
 
-        let result = server.accept_hello().await;
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::InvalidData);
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected after bad first frame")
+            .unwrap();
+        assert_eq!(
+            *rx.borrow(),
+            ConnectionState::Connected {
+                agent_version: "0.1.0".into(),
+                uptime_seconds: 0,
+            }
+        );
     }
 
     #[tokio::test]
-    async fn malformed_frame_is_rejected() {
+    async fn run_skips_malformed_first_frame_and_accepts_next() {
         let server = LinkServer::bind(0).await.unwrap();
         let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
 
-        tokio::spawn(async move {
+        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+
+        {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
-            use tokio::io::AsyncWriteExt;
             stream.write_all(&[0x00, 0x00, 0x00, 0x10]).await.unwrap();
             stream.write_all(&[0xFF, 0xFF]).await.unwrap();
+        }
+
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected after malformed first frame")
+            .unwrap();
+        assert_eq!(
+            *rx.borrow(),
+            ConnectionState::Connected {
+                agent_version: "0.1.0".into(),
+                uptime_seconds: 0,
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn store_histories_are_cleared_on_disconnect() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, mut store_rx) = StateStore::new();
+        let store = Arc::new(store);
+
+        tokio::spawn({
+            let store = Arc::clone(&store);
+            async move { server.run(tx, &store, Duration::from_secs(5)).await }
         });
 
-        let result = server.accept_hello().await;
-        assert!(result.is_err());
+        {
+            let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+            write_frame(&mut stream, &hello_envelope("0.1.0"))
+                .await
+                .unwrap();
+            tokio::time::timeout(Duration::from_secs(2), rx.changed())
+                .await
+                .expect("state did not transition to Connected")
+                .unwrap();
+            write_frame(
+                &mut stream,
+                &Envelope {
+                    version: 1,
+                    payload: Some(envelope::Payload::MetricsSnapshot(MetricsSnapshot {
+                        uptime_seconds: 10,
+                        cpu: Some(CpuMetrics {
+                            utilization: 50.0,
+                            temperature: 60.0,
+                        }),
+                        ..Default::default()
+                    })),
+                },
+            )
+            .await
+            .unwrap();
+            tokio::time::timeout(Duration::from_secs(2), store_rx.changed())
+                .await
+                .expect("store was not updated")
+                .unwrap();
+        }
+
+        tokio::time::timeout(Duration::from_secs(2), store_rx.changed())
+            .await
+            .expect("store was not cleared on disconnect")
+            .unwrap();
+        assert!(store.histories().cpu_utilization.is_empty());
     }
 
     #[tokio::test]

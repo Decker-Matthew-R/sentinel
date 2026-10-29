@@ -158,8 +158,6 @@ mod tests {
         }
     }
 
-    // --- MetricHistory ---
-
     #[test]
     fn push_adds_values() {
         let mut h = MetricHistory::new(10);
@@ -190,8 +188,6 @@ mod tests {
         assert_eq!(vals, vec![1.0, 2.0, 3.0, 4.0, 5.0]);
     }
 
-    // --- StateStore current values (carried from #50) ---
-
     #[test]
     fn initial_state_is_none() {
         let (store, _rx) = StateStore::new();
@@ -221,8 +217,6 @@ mod tests {
         assert!(store.current().is_none());
     }
 
-    // --- MetricHistories ---
-
     #[test]
     fn histories_start_empty() {
         let (store, _rx) = StateStore::new();
@@ -239,7 +233,11 @@ mod tests {
         store.update(full_snapshot(60.0, 90.0, 8192));
         let h = store.histories();
         assert_eq!(h.cpu_utilization.len(), 2);
+        assert_eq!(h.cpu_temperature.len(), 2);
         assert_eq!(h.gpu_utilization.len(), 2);
+        assert_eq!(h.gpu_temperature.len(), 2);
+        assert_eq!(h.gpu_hotspot_temperature.len(), 2);
+        assert_eq!(h.gpu_vram_used_mb.len(), 2);
         assert_eq!(h.ram_used_mb.len(), 2);
     }
 
@@ -260,7 +258,11 @@ mod tests {
         store.clear();
         let h = store.histories();
         assert!(h.cpu_utilization.is_empty());
+        assert!(h.cpu_temperature.is_empty());
         assert!(h.gpu_utilization.is_empty());
+        assert!(h.gpu_temperature.is_empty());
+        assert!(h.gpu_hotspot_temperature.is_empty());
+        assert!(h.gpu_vram_used_mb.is_empty());
         assert!(h.ram_used_mb.is_empty());
     }
 

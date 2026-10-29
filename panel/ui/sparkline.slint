@@ -1,0 +1,32 @@
+import { Palette } from "tokens.slint";
+
+export component Sparkline inherits Rectangle {
+    in property <string> cool-path: "";
+    in property <string> warm-path: "";
+    in property <string> hot-path: "";
+
+    Path {
+        x: 0; y: 0; width: root.width; height: root.height;
+        viewbox-width: 100; viewbox-height: 100;
+        fill: transparent;
+        stroke: Palette.cool;
+        stroke-width: 1.5px;
+        commands: root.cool-path;
+    }
+    Path {
+        x: 0; y: 0; width: root.width; height: root.height;
+        viewbox-width: 100; viewbox-height: 100;
+        fill: transparent;
+        stroke: Palette.warning;
+        stroke-width: 1.5px;
+        commands: root.warm-path;
+    }
+    Path {
+        x: 0; y: 0; width: root.width; height: root.height;
+        viewbox-width: 100; viewbox-height: 100;
+        fill: transparent;
+        stroke: Palette.error;
+        stroke-width: 1.5px;
+        commands: root.hot-path;
+    }
+}
