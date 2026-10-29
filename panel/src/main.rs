@@ -3,6 +3,7 @@ mod framing;
 mod link_server;
 mod proto;
 mod state_store;
+mod view_models;
 
 use connection_state::ConnectionState;
 use link_server::LinkServer;
@@ -12,8 +13,29 @@ use tokio::sync::watch;
 
 slint::include_modules!();
 
+use view_models::{MetricState, cpu_temp_state, gpu_hotspot_state, gpu_temp_state, ram_usage_state, vram_usage_state};
+
+fn to_tile_state(state: MetricState) -> TileState {
+    match state {
+        MetricState::Normal => TileState::Normal,
+        MetricState::Warm => TileState::Warm,
+        MetricState::Hot => TileState::Hot,
+    }
+}
+
 fn format_metric(v: f32) -> String {
     format!("{:.1}", v)
+}
+
+fn format_fraction_gb(used_mb: u64, total_mb: u64) -> String {
+    format!("{:.1} / {:.1}", used_mb as f32 / 1024.0, total_mb as f32 / 1024.0)
+}
+
+fn format_utilization(used_mb: u64, total_mb: u64) -> String {
+    if total_mb == 0 {
+        return "--".to_string();
+    }
+    format!("{:.0}%", used_mb as f32 / total_mb as f32 * 100.0)
 }
 
 fn format_uptime(seconds: u64) -> String {
@@ -98,31 +120,49 @@ async fn main() {
                             if let Some(cpu) = m.cpu {
                                 app.set_cpu_utilization(format_metric(cpu.utilization).into());
                                 app.set_cpu_temperature(format_metric(cpu.temperature).into());
+                                app.set_cpu_temperature_state(to_tile_state(cpu_temp_state(cpu.temperature)));
                             }
                             if let Some(gpu) = m.gpu {
                                 app.set_gpu_utilization(format_metric(gpu.utilization).into());
                                 app.set_gpu_temperature(format_metric(gpu.temperature).into());
+                                app.set_gpu_temperature_state(to_tile_state(gpu_temp_state(gpu.temperature)));
                                 app.set_gpu_hotspot_temperature(
                                     format_metric(gpu.hotspot_temperature).into(),
                                 );
+                                app.set_gpu_hotspot_state(to_tile_state(gpu_hotspot_state(gpu.hotspot_temperature)));
                                 app.set_gpu_vram_used_gb(
-                                    format_metric(gpu.vram_used_mb as f32 / 1024.0).into(),
+                                    format_fraction_gb(gpu.vram_used_mb, gpu.vram_total_mb).into(),
                                 );
+                                app.set_vram_utilization(
+                                    format_utilization(gpu.vram_used_mb, gpu.vram_total_mb).into(),
+                                );
+                                app.set_vram_state(to_tile_state(vram_usage_state(gpu.vram_used_mb, gpu.vram_total_mb)));
                             }
                             if let Some(ram) = m.ram {
                                 app.set_ram_used_gb(
-                                    format_metric(ram.used_mb as f32 / 1024.0).into(),
+                                    format_fraction_gb(ram.used_mb, ram.total_mb).into(),
                                 );
+                                app.set_ram_utilization(
+                                    format_utilization(ram.used_mb, ram.total_mb).into(),
+                                );
+                                app.set_ram_state(to_tile_state(ram_usage_state(ram.used_mb, ram.total_mb)));
                             }
                         }
                         None => {
                             app.set_cpu_utilization("--".into());
                             app.set_cpu_temperature("--".into());
+                            app.set_cpu_temperature_state(TileState::Normal);
                             app.set_gpu_utilization("--".into());
                             app.set_gpu_temperature("--".into());
+                            app.set_gpu_temperature_state(TileState::Normal);
                             app.set_gpu_hotspot_temperature("--".into());
+                            app.set_gpu_hotspot_state(TileState::Normal);
                             app.set_gpu_vram_used_gb("--".into());
+                            app.set_vram_utilization("--".into());
+                            app.set_vram_state(TileState::Normal);
                             app.set_ram_used_gb("--".into());
+                            app.set_ram_utilization("--".into());
+                            app.set_ram_state(TileState::Normal);
                         }
                     }
                 }
@@ -162,6 +202,21 @@ mod tests {
     }
 
     #[test]
+    fn format_fraction_gb_shows_used_and_total() {
+        assert_eq!(format_fraction_gb(8704, 32768), "8.5 / 32.0");
+    }
+
+    #[test]
+    fn format_utilization_shows_integer_percent() {
+        assert_eq!(format_utilization(7500, 10000), "75%");
+    }
+
+    #[test]
+    fn format_utilization_zero_total_returns_placeholder() {
+        assert_eq!(format_utilization(0, 0), "--");
+    }
+
+    #[test]
     fn ui_reflects_all_connection_states() {
         init_slint_once();
         let app = AppWindow::new().unwrap();
@@ -175,7 +230,9 @@ mod tests {
         assert_eq!(app.get_gpu_temperature().as_str(), "--");
         assert_eq!(app.get_gpu_hotspot_temperature().as_str(), "--");
         assert_eq!(app.get_gpu_vram_used_gb().as_str(), "--");
+        assert_eq!(app.get_vram_utilization().as_str(), "--");
         assert_eq!(app.get_ram_used_gb().as_str(), "--");
+        assert_eq!(app.get_ram_utilization().as_str(), "--");
 
         let (status, version, uptime) = to_slint_props(&ConnectionState::Connected {
             agent_version: "fake-1.0.0".into(),
