@@ -674,6 +674,7 @@ mod tests {
         assert_eq!(app.get_ram_name().as_str(), "");
         assert_eq!(app.get_os_version().as_str(), "");
         assert!(!app.get_show_specs());
+        assert!(!app.get_show_commands());
 
         let (status, version, uptime) = to_slint_props(&ConnectionState::Connected {
             agent_version: "fake-1.0.0".into(),

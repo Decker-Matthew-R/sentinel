@@ -64,6 +64,8 @@ export component AppWindow inherits Window {
     in property <string> ram-speed: "";
     in property <string> os-version: "";
     in-out property <bool> show-specs: false;
+    in-out property <bool> show-commands: false;
+    private property <length> nav-bar-height: 52px;
 
     if root.status == ConnectionStatus.waiting : VerticalLayout {
         alignment: center;
@@ -83,153 +85,237 @@ export component AppWindow inherits Window {
     }
 
     if root.status == ConnectionStatus.connected : VerticalLayout {
-        padding: 16px;
-        spacing: 16px;
-        alignment: start;
 
-        HorizontalLayout {
-            spacing: 12px;
-            Text {
-                text: root.agent-version;
-                color: Palette.success;
-                font-size: Typography.caption;
-                horizontal-stretch: 1;
-            }
-            Text {
-                text: root.uptime;
-                color: Palette.text-secondary;
-                font-size: Typography.caption;
-            }
-            Rectangle {
-                specs-ta := TouchArea {
-                    clicked => { root.show-specs = true; }
-                }
-                Text {
-                    text: "Specs →";
-                    color: specs-ta.has-hover ? Palette.text-primary : Palette.text-secondary;
-                    font-size: Typography.caption;
-                    vertical-alignment: center;
-                }
-            }
-        }
-
-        VerticalLayout {
-            spacing: 8px;
+        // ── Status page ──────────────────────────────────────────────────────
+        if !root.show-commands : VerticalLayout {
+            vertical-stretch: 1;
+            padding: 16px;
+            spacing: 16px;
             alignment: start;
-            HorizontalLayout {
-                spacing: 6px;
-                alignment: start;
-                Text {
-                    text: "CPU";
-                    color: Palette.text-secondary;
-                    font-size: Typography.body;
-                }
-                if root.cpu-name != "" : Text {
-                    text: "· " + root.cpu-name;
-                    color: Palette.text-secondary;
-                    font-size: Typography.caption;
-                    vertical-alignment: bottom;
-                }
-            }
-            HorizontalLayout {
-                spacing: 8px;
-                MetricTile {
-                    label: "Usage"; value: root.cpu-utilization; unit: "%";
-                    state: root.cpu-utilization-state;
-                    hot-icon: "⚡"; warm-icon: "📶";
-                    sparkline-cool: root.cpu-utilization-cool;
-                    sparkline-warm: root.cpu-utilization-warm;
-                    sparkline-hot: root.cpu-utilization-hot;
-                    width: (parent.width - 8px) / 2;
-                }
-                MetricTile {
-                    label: "Temperature"; value: root.cpu-temperature; unit: "°C";
-                    state: root.cpu-temperature-state;
-                    sparkline-cool: root.cpu-temperature-cool;
-                    sparkline-warm: root.cpu-temperature-warm;
-                    sparkline-hot: root.cpu-temperature-hot;
-                    width: (parent.width - 8px) / 2;
-                }
-            }
-        }
 
-        VerticalLayout {
-            spacing: 8px;
-            alignment: start;
             HorizontalLayout {
-                spacing: 6px;
-                alignment: start;
+                spacing: 12px;
                 Text {
-                    text: "GPU";
-                    color: Palette.text-secondary;
-                    font-size: Typography.body;
-                }
-                if root.gpu-name != "" : Text {
-                    text: "· " + root.gpu-name;
-                    color: Palette.text-secondary;
+                    text: root.agent-version;
+                    color: Palette.success;
                     font-size: Typography.caption;
-                    vertical-alignment: bottom;
-                }
-            }
-            HorizontalLayout {
-                spacing: 8px;
-                MetricTile {
-                    label: "Usage"; value: root.gpu-utilization; unit: "%";
-                    state: root.gpu-utilization-state;
-                    hot-icon: "⚡"; warm-icon: "📶";
-                    sparkline-cool: root.gpu-utilization-cool;
-                    sparkline-warm: root.gpu-utilization-warm;
-                    sparkline-hot: root.gpu-utilization-hot;
-                    width: (parent.width - 8px) / 2;
-                }
-                MetricTile {
-                    label: "Temperature"; value: root.gpu-temperature; unit: "°C";
-                    state: root.gpu-temperature-state;
-                    sparkline-cool: root.gpu-temperature-cool;
-                    sparkline-warm: root.gpu-temperature-warm;
-                    sparkline-hot: root.gpu-temperature-hot;
-                    width: (parent.width - 8px) / 2;
-                }
-            }
-            HorizontalLayout {
-                spacing: 8px;
-                MetricTile {
-                    label: "Hotspot"; value: root.gpu-hotspot-temperature; unit: "°C";
-                    state: root.gpu-hotspot-state;
-                    sparkline-cool: root.gpu-hotspot-cool;
-                    sparkline-warm: root.gpu-hotspot-warm;
-                    sparkline-hot: root.gpu-hotspot-hot;
-                    width: (parent.width - 8px) / 2;
-                }
-                MetricTile {
-                    label: "VRAM"; value: root.gpu-vram-used-gb; unit: "GB";
-                    sub-value: root.vram-utilization; state: root.vram-state;
-                    hot-icon: "⚡"; warm-icon: "📶";
-                    sparkline-cool: root.gpu-vram-cool;
-                    sparkline-warm: root.gpu-vram-warm;
-                    sparkline-hot: root.gpu-vram-hot;
-                    width: (parent.width - 8px) / 2;
-                }
-            }
-        }
-
-        VerticalLayout {
-            spacing: 8px;
-            alignment: start;
-            Text {
-                text: "RAM";
-                color: Palette.text-secondary;
-                font-size: Typography.body;
-            }
-            HorizontalLayout {
-                MetricTile {
-                    label: "Memory"; value: root.ram-used-gb; unit: "GB";
-                    sub-value: root.ram-utilization; state: root.ram-state;
-                    hot-icon: "⚡"; warm-icon: "📶";
-                    sparkline-cool: root.ram-cool;
-                    sparkline-warm: root.ram-warm;
-                    sparkline-hot: root.ram-hot;
                     horizontal-stretch: 1;
+                }
+                Text {
+                    text: root.uptime;
+                    color: Palette.text-secondary;
+                    font-size: Typography.caption;
+                }
+                Rectangle {
+                    specs-ta := TouchArea {
+                        clicked => { root.show-specs = true; }
+                    }
+                    Text {
+                        text: "Specs →";
+                        color: specs-ta.has-hover ? Palette.text-primary : Palette.text-secondary;
+                        font-size: Typography.caption;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            VerticalLayout {
+                spacing: 8px;
+                alignment: start;
+                HorizontalLayout {
+                    spacing: 6px;
+                    alignment: start;
+                    Text {
+                        text: "CPU";
+                        color: Palette.text-secondary;
+                        font-size: Typography.body;
+                    }
+                    if root.cpu-name != "" : Text {
+                        text: "· " + root.cpu-name;
+                        color: Palette.text-secondary;
+                        font-size: Typography.caption;
+                        vertical-alignment: bottom;
+                    }
+                }
+                HorizontalLayout {
+                    spacing: 8px;
+                    MetricTile {
+                        label: "Usage"; value: root.cpu-utilization; unit: "%";
+                        state: root.cpu-utilization-state;
+                        hot-icon: "⚡"; warm-icon: "📶";
+                        sparkline-cool: root.cpu-utilization-cool;
+                        sparkline-warm: root.cpu-utilization-warm;
+                        sparkline-hot: root.cpu-utilization-hot;
+                        width: (parent.width - 8px) / 2;
+                    }
+                    MetricTile {
+                        label: "Temperature"; value: root.cpu-temperature; unit: "°C";
+                        state: root.cpu-temperature-state;
+                        sparkline-cool: root.cpu-temperature-cool;
+                        sparkline-warm: root.cpu-temperature-warm;
+                        sparkline-hot: root.cpu-temperature-hot;
+                        width: (parent.width - 8px) / 2;
+                    }
+                }
+            }
+
+            VerticalLayout {
+                spacing: 8px;
+                alignment: start;
+                HorizontalLayout {
+                    spacing: 6px;
+                    alignment: start;
+                    Text {
+                        text: "GPU";
+                        color: Palette.text-secondary;
+                        font-size: Typography.body;
+                    }
+                    if root.gpu-name != "" : Text {
+                        text: "· " + root.gpu-name;
+                        color: Palette.text-secondary;
+                        font-size: Typography.caption;
+                        vertical-alignment: bottom;
+                    }
+                }
+                HorizontalLayout {
+                    spacing: 8px;
+                    MetricTile {
+                        label: "Usage"; value: root.gpu-utilization; unit: "%";
+                        state: root.gpu-utilization-state;
+                        hot-icon: "⚡"; warm-icon: "📶";
+                        sparkline-cool: root.gpu-utilization-cool;
+                        sparkline-warm: root.gpu-utilization-warm;
+                        sparkline-hot: root.gpu-utilization-hot;
+                        width: (parent.width - 8px) / 2;
+                    }
+                    MetricTile {
+                        label: "Temperature"; value: root.gpu-temperature; unit: "°C";
+                        state: root.gpu-temperature-state;
+                        sparkline-cool: root.gpu-temperature-cool;
+                        sparkline-warm: root.gpu-temperature-warm;
+                        sparkline-hot: root.gpu-temperature-hot;
+                        width: (parent.width - 8px) / 2;
+                    }
+                }
+                HorizontalLayout {
+                    spacing: 8px;
+                    MetricTile {
+                        label: "Hotspot"; value: root.gpu-hotspot-temperature; unit: "°C";
+                        state: root.gpu-hotspot-state;
+                        sparkline-cool: root.gpu-hotspot-cool;
+                        sparkline-warm: root.gpu-hotspot-warm;
+                        sparkline-hot: root.gpu-hotspot-hot;
+                        width: (parent.width - 8px) / 2;
+                    }
+                    MetricTile {
+                        label: "VRAM"; value: root.gpu-vram-used-gb; unit: "GB";
+                        sub-value: root.vram-utilization; state: root.vram-state;
+                        hot-icon: "⚡"; warm-icon: "📶";
+                        sparkline-cool: root.gpu-vram-cool;
+                        sparkline-warm: root.gpu-vram-warm;
+                        sparkline-hot: root.gpu-vram-hot;
+                        width: (parent.width - 8px) / 2;
+                    }
+                }
+            }
+
+            VerticalLayout {
+                spacing: 8px;
+                alignment: start;
+                Text {
+                    text: "RAM";
+                    color: Palette.text-secondary;
+                    font-size: Typography.body;
+                }
+                HorizontalLayout {
+                    MetricTile {
+                        label: "Memory"; value: root.ram-used-gb; unit: "GB";
+                        sub-value: root.ram-utilization; state: root.ram-state;
+                        hot-icon: "⚡"; warm-icon: "📶";
+                        sparkline-cool: root.ram-cool;
+                        sparkline-warm: root.ram-warm;
+                        sparkline-hot: root.ram-hot;
+                        horizontal-stretch: 1;
+                    }
+                }
+            }
+        }
+
+        // ── Command Center page ───────────────────────────────────────────────
+        if root.show-commands : VerticalLayout {
+            vertical-stretch: 1;
+            padding: 16px;
+            spacing: 16px;
+            alignment: start;
+
+            VerticalLayout {
+                spacing: 8px;
+                alignment: start;
+                Text {
+                    text: "Steam";
+                    color: Palette.text-secondary;
+                    font-size: Typography.body;
+                }
+                Text {
+                    text: "Coming soon";
+                    color: Palette.text-secondary;
+                    font-size: Typography.caption;
+                }
+            }
+        }
+
+        // ── Nav bar ───────────────────────────────────────────────────────────
+        Rectangle {
+            height: root.nav-bar-height;
+            background: Palette.surface;
+
+            VerticalLayout {
+                Rectangle { height: 1px; background: Palette.border; }
+
+                HorizontalLayout {
+                    vertical-stretch: 1;
+
+                    Rectangle {
+                        status-ta := TouchArea {
+                            clicked => { root.show-commands = false; root.show-specs = false; }
+                        }
+                        if !root.show-commands : Rectangle {
+                            x: 0; y: 0;
+                            width: parent.width;
+                            height: 3px;
+                            background: Palette.cool;
+                        }
+                        Text {
+                            text: "Status";
+                            color: !root.show-commands ? Palette.text-primary : Palette.text-secondary;
+                            font-size: Typography.body;
+                            width: parent.width;
+                            height: parent.height;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        commands-ta := TouchArea {
+                            clicked => { root.show-commands = true; root.show-specs = false; }
+                        }
+                        if root.show-commands : Rectangle {
+                            x: 0; y: 0;
+                            width: parent.width;
+                            height: 3px;
+                            background: Palette.cool;
+                        }
+                        Text {
+                            text: "Commands";
+                            color: root.show-commands ? Palette.text-primary : Palette.text-secondary;
+                            font-size: Typography.body;
+                            width: parent.width;
+                            height: parent.height;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
                 }
             }
         }
@@ -259,6 +345,8 @@ export component AppWindow inherits Window {
     }
 
     if root.show-specs : Rectangle {
+        y: 0;
+        height: parent.height - root.nav-bar-height;
         background: Palette.background;
 
         VerticalLayout {
