@@ -1,6 +1,6 @@
 # Roadmap — Sentinel
 
-> Status: **In progress** — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 functionally complete — #56–60 done, #61 hardware blocked. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
+> Status: **In progress** — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 functionally complete — #56–60 done, #61 hardware blocked. M5 in progress — #62 and #96 done. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
 
 ## Goals of the project
 
@@ -130,7 +130,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 **Goal:** Launch Steam and the last-played game from the tablet.
 
 - [x] #62 — VDF/KeyValues parser for Steam library files
-- [ ] #96 — Add navigation bar and Command Center shell
+- [x] #96 — Add navigation bar and Command Center shell
 - [ ] #63 — Agent: `ActionRunner` validates action IDs and executes whitelisted commands *(hardware blocked)*
 - [ ] #64 — Panel sends `Command` on button press and handles `CommandResult`
 - [ ] #65 — `SteamLibrary` locates install, last-played game, and app names *(hardware blocked)*
