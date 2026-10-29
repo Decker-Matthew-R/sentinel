@@ -129,7 +129,8 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 **Goal:** Launch Steam and the last-played game from the tablet.
 
-- [ ] #62 — VDF/KeyValues parser for Steam library files
+- [x] #62 — VDF/KeyValues parser for Steam library files
+- [ ] #96 — Add navigation bar and Command Center shell
 - [ ] #63 — Agent: `ActionRunner` validates action IDs and executes whitelisted commands *(hardware blocked)*
 - [ ] #64 — Panel sends `Command` on button press and handles `CommandResult`
 - [ ] #65 — `SteamLibrary` locates install, last-played game, and app names *(hardware blocked)*

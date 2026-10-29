@@ -83,6 +83,7 @@ flowchart LR
 | `ISensorSource` | Interface over the sensor layer; `FakeSensorSource` is the always-available dev/test implementation; `LibreHardwareMonitorSource` is the real one (M3 #54) |
 | `SensorPoller` | Polls `ISensorSource` roughly once per second and produces `MetricsSnapshot` |
 | `ISpecsSource` | Interface over static hardware info; `FakeSpecsSource` is the always-available dev/test implementation; `WindowsSpecsSource` is the real one (M3 #54) |
+| `VdfParser` | Parses VDF/KeyValues text into a `VdfNode` tree (`VdfString` / `VdfMap`); used by `SteamLibrary` to read `.acf` and `.vdf` files |
 | `SteamLibrary` | Finds Steam install and library folders, parses `localconfig.vdf` (last played) and `appmanifest_*.acf` (names), loads cached cover art |
 | `ActionRunner` | Maps an **action ID** to a predefined command. Never executes arbitrary input |
 | `LinkClient` | Connects to the tablet, performs the handshake, streams data, retries with backoff |
@@ -97,7 +98,8 @@ Runs as a **user-session tray app** started at logon by Task Scheduler with high
 | `LinkServer` | Listens on the USB network interface, authenticates the agent, decodes frames |
 | `StateStore` | Current values, ~60 s ring-buffer history per metric, connection state |
 | `ViewModels` | Pure logic: unit formatting, threshold colors (normal / warm / hot), utilization percentages |
-| Slint UI | Renders directly to the display via KMS/DRM — no X11/Wayland compositor |
+| Nav bar | Bottom tab bar routing between System Status and Command Center; active tab highlighted with `Palette` tokens |
+| Slint UI | Renders directly to the display via KMS/DRM — no X11/Wayland compositor; hosts System Status and Command Center pages |
 
 Threading: the Slint event loop owns the main thread; a tokio runtime handles networking; updates cross to the UI via `slint::invoke_from_event_loop`.
 
