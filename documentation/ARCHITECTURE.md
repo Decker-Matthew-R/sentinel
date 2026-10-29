@@ -135,7 +135,7 @@ Both timeout and disconnect transition to `Stale` rather than back to `Waiting` 
 | `Heartbeat` | — | Reserved; defined in v1 but unused — `MetricsSnapshot` now drives stale detection | Defined in v1 |
 | `MetricsSnapshot` | Agent → Tablet | ~1 Hz: utilization, temps, clocks, power, memory, uptime | Defined in v1 (uptime + nested `CpuMetrics`, `GpuMetrics`, `RamMetrics` — fields expand in M3) |
 | `Capabilities` | Agent → Tablet | After handshake: features and action list the agent supports | Planned (M5) |
-| `Specs` | Agent → Tablet | Once per connection: CPU/GPU model, RAM, OS | Defined in v1 |
+| `Specs` | Agent → Tablet | Once per connection: CPU model/cores/threads/boost clock, GPU model/VRAM, RAM name/total/speed, OS version | Defined in v1 |
 | `GameInfo` | Agent → Tablet | On connect and when it changes: app ID, name, cover art bytes | Planned (M5) |
 | `Command` | Tablet → Agent | Button press: request ID + action ID | Planned (M5) |
 | `CommandResult` | Agent → Tablet | Success or error for a request ID | Planned (M5) |

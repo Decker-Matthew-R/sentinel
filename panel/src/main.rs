@@ -116,6 +116,18 @@ fn build_colored_sparkline_paths(
     (cool, warm, hot)
 }
 
+fn format_boost_clock(mhz: u32) -> String {
+    format!("{:.1} GHz", mhz as f32 / 1000.0)
+}
+
+fn format_total_gb(total_mb: u64) -> String {
+    format!("{:.0} GB", total_mb as f32 / 1024.0)
+}
+
+fn format_ram_speed(mhz: u32) -> String {
+    format!("{mhz} MHz")
+}
+
 fn format_uptime(seconds: u64) -> String {
     let days = seconds / 86400;
     let hours = (seconds % 86400) / 3600;
@@ -168,6 +180,7 @@ async fn main() {
     let app = AppWindow::new().unwrap();
     let app_weak = app.as_weak();
     let app_weak2 = app.as_weak();
+    let app_weak3 = app.as_weak();
 
     tokio::spawn(async move {
         let mut rx = rx;
@@ -368,6 +381,54 @@ async fn main() {
         }
     });
 
+    tokio::spawn({
+        let store = Arc::clone(&store);
+        async move {
+            let mut specs_rx = store.subscribe_specs();
+            loop {
+                if specs_rx.changed().await.is_err() {
+                    break;
+                }
+                let specs = specs_rx.borrow().clone();
+                let handle = app_weak3.clone();
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(app) = handle.upgrade() {
+                        match specs {
+                            Some(s) => {
+                                app.set_cpu_name(s.cpu_name.into());
+                                app.set_cpu_cores_threads(
+                                    format!("{}C / {}T", s.cpu_core_count, s.cpu_thread_count)
+                                        .into(),
+                                );
+                                app.set_cpu_boost_clock(
+                                    format_boost_clock(s.cpu_boost_clock_mhz).into(),
+                                );
+                                app.set_gpu_name(s.gpu_name.into());
+                                app.set_gpu_vram_total(format_total_gb(s.gpu_vram_total_mb).into());
+                                app.set_ram_name(s.ram_name.into());
+                                app.set_ram_total(format_total_gb(s.ram_total_mb).into());
+                                app.set_ram_speed(format_ram_speed(s.ram_speed_mhz).into());
+                                app.set_os_version(s.os_version.into());
+                            }
+                            None => {
+                                app.set_cpu_name("".into());
+                                app.set_cpu_cores_threads("".into());
+                                app.set_cpu_boost_clock("".into());
+                                app.set_gpu_name("".into());
+                                app.set_gpu_vram_total("".into());
+                                app.set_ram_name("".into());
+                                app.set_ram_total("".into());
+                                app.set_ram_speed("".into());
+                                app.set_os_version("".into());
+                                app.set_show_specs(false);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    });
+
     app.run().unwrap();
 }
 
@@ -385,6 +446,41 @@ mod tests {
             )))
             .unwrap();
         });
+    }
+
+    #[test]
+    fn format_boost_clock_converts_mhz_to_ghz() {
+        assert_eq!(format_boost_clock(5800), "5.8 GHz");
+    }
+
+    #[test]
+    fn format_boost_clock_round_number() {
+        assert_eq!(format_boost_clock(5000), "5.0 GHz");
+    }
+
+    #[test]
+    fn format_total_gb_converts_mb() {
+        assert_eq!(format_total_gb(32768), "32 GB");
+    }
+
+    #[test]
+    fn format_total_gb_16gb() {
+        assert_eq!(format_total_gb(16384), "16 GB");
+    }
+
+    #[test]
+    fn format_ram_speed_formats_mhz() {
+        assert_eq!(format_ram_speed(6000), "6000 MHz");
+    }
+
+    #[test]
+    fn format_boost_clock_zero() {
+        assert_eq!(format_boost_clock(0), "0.0 GHz");
+    }
+
+    #[test]
+    fn format_total_gb_zero() {
+        assert_eq!(format_total_gb(0), "0 GB");
     }
 
     #[test]
@@ -573,6 +669,11 @@ mod tests {
         assert_eq!(app.get_vram_utilization().as_str(), "--");
         assert_eq!(app.get_ram_used_gb().as_str(), "--");
         assert_eq!(app.get_ram_utilization().as_str(), "--");
+        assert_eq!(app.get_cpu_name().as_str(), "");
+        assert_eq!(app.get_gpu_name().as_str(), "");
+        assert_eq!(app.get_ram_name().as_str(), "");
+        assert_eq!(app.get_os_version().as_str(), "");
+        assert!(!app.get_show_specs());
 
         let (status, version, uptime) = to_slint_props(&ConnectionState::Connected {
             agent_version: "fake-1.0.0".into(),
