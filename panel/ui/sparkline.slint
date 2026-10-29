@@ -1,0 +1,13 @@
+import { Palette } from "tokens.slint";
+
+export component Sparkline inherits Path {
+    in property <string> sparkline-path: "";
+    in property <color> line-color: Palette.cool;
+
+    viewbox-width: 100;
+    viewbox-height: 100;
+    fill: transparent;
+    stroke: root.line-color;
+    stroke-width: 1.5px;
+    commands: root.sparkline-path;
+}

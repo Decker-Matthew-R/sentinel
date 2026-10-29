@@ -8,6 +8,7 @@ mod view_models;
 use connection_state::ConnectionState;
 use link_server::LinkServer;
 use state_store::StateStore;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::watch;
 
@@ -43,6 +44,32 @@ fn format_utilization(used_mb: u64, total_mb: u64) -> String {
         return "--".to_string();
     }
     format!("{:.0}%", used_mb as f32 / total_mb as f32 * 100.0)
+}
+
+fn build_sparkline_path(values: &[f32]) -> String {
+    if values.len() < 2 {
+        return String::new();
+    }
+    let min = values.iter().cloned().fold(f32::INFINITY, f32::min);
+    let max = values.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+    let flat = (max - min).abs() < f32::EPSILON;
+    let range = if flat { 1.0 } else { max - min };
+    let n = values.len();
+    let mut path = String::new();
+    for (i, &v) in values.iter().enumerate() {
+        let x = i as f32 / (n - 1) as f32 * 100.0;
+        let y = if flat {
+            50.0
+        } else {
+            100.0 - (v - min) / range * 100.0
+        };
+        if i == 0 {
+            path.push_str(&format!("M {x:.1},{y:.1}"));
+        } else {
+            path.push_str(&format!(" L {x:.1},{y:.1}"));
+        }
+    }
+    path
 }
 
 fn format_uptime(seconds: u64) -> String {
@@ -85,9 +112,13 @@ async fn main() {
     let server = LinkServer::bind(9000).await.unwrap();
     let (tx, rx) = watch::channel(ConnectionState::Waiting);
     let (store, mut store_rx) = StateStore::new();
+    let store = Arc::new(store);
 
-    tokio::spawn(async move {
-        server.run(tx, &store, Duration::from_secs(5)).await;
+    tokio::spawn({
+        let store = Arc::clone(&store);
+        async move {
+            server.run(tx, &store, Duration::from_secs(5)).await;
+        }
     });
 
     let app = AppWindow::new().unwrap();
@@ -113,79 +144,149 @@ async fn main() {
         }
     });
 
-    tokio::spawn(async move {
-        loop {
-            if store_rx.changed().await.is_err() {
-                break;
-            }
-            let snapshot = *store_rx.borrow();
-            let handle = app_weak2.clone();
-            let _ = slint::invoke_from_event_loop(move || {
-                if let Some(app) = handle.upgrade() {
-                    match snapshot {
-                        Some(m) => {
-                            if let Some(cpu) = m.cpu {
-                                app.set_cpu_utilization(format_metric(cpu.utilization).into());
-                                app.set_cpu_temperature(format_metric(cpu.temperature).into());
-                                app.set_cpu_temperature_state(to_tile_state(cpu_temp_state(
-                                    cpu.temperature,
-                                )));
+    tokio::spawn({
+        let store = Arc::clone(&store);
+        async move {
+            loop {
+                if store_rx.changed().await.is_err() {
+                    break;
+                }
+                let snapshot = *store_rx.borrow();
+                let (
+                    cpu_util_spark,
+                    cpu_temp_spark,
+                    gpu_util_spark,
+                    gpu_temp_spark,
+                    gpu_hotspot_spark,
+                    vram_spark,
+                    ram_spark,
+                ) = {
+                    let h = store.histories();
+                    (
+                        build_sparkline_path(
+                            &h.cpu_utilization
+                                .values()
+                                .iter()
+                                .copied()
+                                .collect::<Vec<_>>(),
+                        ),
+                        build_sparkline_path(
+                            &h.cpu_temperature
+                                .values()
+                                .iter()
+                                .copied()
+                                .collect::<Vec<_>>(),
+                        ),
+                        build_sparkline_path(
+                            &h.gpu_utilization
+                                .values()
+                                .iter()
+                                .copied()
+                                .collect::<Vec<_>>(),
+                        ),
+                        build_sparkline_path(
+                            &h.gpu_temperature
+                                .values()
+                                .iter()
+                                .copied()
+                                .collect::<Vec<_>>(),
+                        ),
+                        build_sparkline_path(
+                            &h.gpu_hotspot_temperature
+                                .values()
+                                .iter()
+                                .copied()
+                                .collect::<Vec<_>>(),
+                        ),
+                        build_sparkline_path(
+                            &h.gpu_vram_used_mb
+                                .values()
+                                .iter()
+                                .copied()
+                                .collect::<Vec<_>>(),
+                        ),
+                        build_sparkline_path(
+                            &h.ram_used_mb.values().iter().copied().collect::<Vec<_>>(),
+                        ),
+                    )
+                };
+                let handle = app_weak2.clone();
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(app) = handle.upgrade() {
+                        app.set_cpu_utilization_sparkline(cpu_util_spark.into());
+                        app.set_cpu_temperature_sparkline(cpu_temp_spark.into());
+                        app.set_gpu_utilization_sparkline(gpu_util_spark.into());
+                        app.set_gpu_temperature_sparkline(gpu_temp_spark.into());
+                        app.set_gpu_hotspot_sparkline(gpu_hotspot_spark.into());
+                        app.set_gpu_vram_sparkline(vram_spark.into());
+                        app.set_ram_sparkline(ram_spark.into());
+                        match snapshot {
+                            Some(m) => {
+                                if let Some(cpu) = m.cpu {
+                                    app.set_cpu_utilization(format_metric(cpu.utilization).into());
+                                    app.set_cpu_temperature(format_metric(cpu.temperature).into());
+                                    app.set_cpu_temperature_state(to_tile_state(cpu_temp_state(
+                                        cpu.temperature,
+                                    )));
+                                }
+                                if let Some(gpu) = m.gpu {
+                                    app.set_gpu_utilization(format_metric(gpu.utilization).into());
+                                    app.set_gpu_temperature(format_metric(gpu.temperature).into());
+                                    app.set_gpu_temperature_state(to_tile_state(gpu_temp_state(
+                                        gpu.temperature,
+                                    )));
+                                    app.set_gpu_hotspot_temperature(
+                                        format_metric(gpu.hotspot_temperature).into(),
+                                    );
+                                    app.set_gpu_hotspot_state(to_tile_state(gpu_hotspot_state(
+                                        gpu.hotspot_temperature,
+                                    )));
+                                    app.set_gpu_vram_used_gb(
+                                        format_fraction_gb(gpu.vram_used_mb, gpu.vram_total_mb)
+                                            .into(),
+                                    );
+                                    app.set_vram_utilization(
+                                        format_utilization(gpu.vram_used_mb, gpu.vram_total_mb)
+                                            .into(),
+                                    );
+                                    app.set_vram_state(to_tile_state(vram_usage_state(
+                                        gpu.vram_used_mb,
+                                        gpu.vram_total_mb,
+                                    )));
+                                }
+                                if let Some(ram) = m.ram {
+                                    app.set_ram_used_gb(
+                                        format_fraction_gb(ram.used_mb, ram.total_mb).into(),
+                                    );
+                                    app.set_ram_utilization(
+                                        format_utilization(ram.used_mb, ram.total_mb).into(),
+                                    );
+                                    app.set_ram_state(to_tile_state(ram_usage_state(
+                                        ram.used_mb,
+                                        ram.total_mb,
+                                    )));
+                                }
                             }
-                            if let Some(gpu) = m.gpu {
-                                app.set_gpu_utilization(format_metric(gpu.utilization).into());
-                                app.set_gpu_temperature(format_metric(gpu.temperature).into());
-                                app.set_gpu_temperature_state(to_tile_state(gpu_temp_state(
-                                    gpu.temperature,
-                                )));
-                                app.set_gpu_hotspot_temperature(
-                                    format_metric(gpu.hotspot_temperature).into(),
-                                );
-                                app.set_gpu_hotspot_state(to_tile_state(gpu_hotspot_state(
-                                    gpu.hotspot_temperature,
-                                )));
-                                app.set_gpu_vram_used_gb(
-                                    format_fraction_gb(gpu.vram_used_mb, gpu.vram_total_mb).into(),
-                                );
-                                app.set_vram_utilization(
-                                    format_utilization(gpu.vram_used_mb, gpu.vram_total_mb).into(),
-                                );
-                                app.set_vram_state(to_tile_state(vram_usage_state(
-                                    gpu.vram_used_mb,
-                                    gpu.vram_total_mb,
-                                )));
+                            None => {
+                                app.set_cpu_utilization("--".into());
+                                app.set_cpu_temperature("--".into());
+                                app.set_cpu_temperature_state(TileState::Normal);
+                                app.set_gpu_utilization("--".into());
+                                app.set_gpu_temperature("--".into());
+                                app.set_gpu_temperature_state(TileState::Normal);
+                                app.set_gpu_hotspot_temperature("--".into());
+                                app.set_gpu_hotspot_state(TileState::Normal);
+                                app.set_gpu_vram_used_gb("--".into());
+                                app.set_vram_utilization("--".into());
+                                app.set_vram_state(TileState::Normal);
+                                app.set_ram_used_gb("--".into());
+                                app.set_ram_utilization("--".into());
+                                app.set_ram_state(TileState::Normal);
                             }
-                            if let Some(ram) = m.ram {
-                                app.set_ram_used_gb(
-                                    format_fraction_gb(ram.used_mb, ram.total_mb).into(),
-                                );
-                                app.set_ram_utilization(
-                                    format_utilization(ram.used_mb, ram.total_mb).into(),
-                                );
-                                app.set_ram_state(to_tile_state(ram_usage_state(
-                                    ram.used_mb,
-                                    ram.total_mb,
-                                )));
-                            }
-                        }
-                        None => {
-                            app.set_cpu_utilization("--".into());
-                            app.set_cpu_temperature("--".into());
-                            app.set_cpu_temperature_state(TileState::Normal);
-                            app.set_gpu_utilization("--".into());
-                            app.set_gpu_temperature("--".into());
-                            app.set_gpu_temperature_state(TileState::Normal);
-                            app.set_gpu_hotspot_temperature("--".into());
-                            app.set_gpu_hotspot_state(TileState::Normal);
-                            app.set_gpu_vram_used_gb("--".into());
-                            app.set_vram_utilization("--".into());
-                            app.set_vram_state(TileState::Normal);
-                            app.set_ram_used_gb("--".into());
-                            app.set_ram_utilization("--".into());
-                            app.set_ram_state(TileState::Normal);
                         }
                     }
-                }
-            });
+                });
+            }
         }
     });
 
@@ -209,6 +310,31 @@ mod tests {
 
     #[test]
     fn panel_tests_run() {}
+
+    #[test]
+    fn build_sparkline_empty_slice_returns_empty() {
+        assert_eq!(build_sparkline_path(&[]), "");
+    }
+
+    #[test]
+    fn build_sparkline_single_point_returns_empty() {
+        assert_eq!(build_sparkline_path(&[42.0]), "");
+    }
+
+    #[test]
+    fn build_sparkline_flat_line_uses_midpoint_y() {
+        let path = build_sparkline_path(&[5.0, 5.0, 5.0]);
+        assert!(path.starts_with("M 0.0,50.0"), "got: {path}");
+        assert!(path.ends_with("L 100.0,50.0"), "got: {path}");
+    }
+
+    #[test]
+    fn build_sparkline_ascending_maps_to_descending_y() {
+        assert_eq!(
+            build_sparkline_path(&[0.0, 100.0]),
+            "M 0.0,100.0 L 100.0,0.0"
+        );
+    }
 
     #[test]
     fn format_metric_one_decimal_place() {

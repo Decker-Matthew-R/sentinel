@@ -30,6 +30,14 @@ export component AppWindow inherits Window {
     in property <string> vram-utilization: "--";
     in property <string> ram-utilization: "--";
 
+    in property <string> cpu-utilization-sparkline: "";
+    in property <string> cpu-temperature-sparkline: "";
+    in property <string> gpu-utilization-sparkline: "";
+    in property <string> gpu-temperature-sparkline: "";
+    in property <string> gpu-hotspot-sparkline: "";
+    in property <string> gpu-vram-sparkline: "";
+    in property <string> ram-sparkline: "";
+
     if root.status == ConnectionStatus.waiting : VerticalLayout {
         alignment: center;
         spacing: 8px;
@@ -76,8 +84,8 @@ export component AppWindow inherits Window {
             }
             HorizontalLayout {
                 spacing: 8px;
-                MetricTile { label: "Usage"; value: root.cpu-utilization; unit: "%"; width: (parent.width - 8px) / 2; }
-                MetricTile { label: "Temperature"; value: root.cpu-temperature; unit: "°C"; state: root.cpu-temperature-state; width: (parent.width - 8px) / 2; }
+                MetricTile { label: "Usage"; value: root.cpu-utilization; unit: "%"; sparkline-path: root.cpu-utilization-sparkline; width: (parent.width - 8px) / 2; }
+                MetricTile { label: "Temperature"; value: root.cpu-temperature; unit: "°C"; state: root.cpu-temperature-state; sparkline-path: root.cpu-temperature-sparkline; width: (parent.width - 8px) / 2; }
             }
         }
 
@@ -91,13 +99,13 @@ export component AppWindow inherits Window {
             }
             HorizontalLayout {
                 spacing: 8px;
-                MetricTile { label: "Usage"; value: root.gpu-utilization; unit: "%"; width: (parent.width - 8px) / 2; }
-                MetricTile { label: "Temperature"; value: root.gpu-temperature; unit: "°C"; state: root.gpu-temperature-state; width: (parent.width - 8px) / 2; }
+                MetricTile { label: "Usage"; value: root.gpu-utilization; unit: "%"; sparkline-path: root.gpu-utilization-sparkline; width: (parent.width - 8px) / 2; }
+                MetricTile { label: "Temperature"; value: root.gpu-temperature; unit: "°C"; state: root.gpu-temperature-state; sparkline-path: root.gpu-temperature-sparkline; width: (parent.width - 8px) / 2; }
             }
             HorizontalLayout {
                 spacing: 8px;
-                MetricTile { label: "Hotspot"; value: root.gpu-hotspot-temperature; unit: "°C"; state: root.gpu-hotspot-state; width: (parent.width - 8px) / 2; }
-                MetricTile { label: "VRAM"; value: root.gpu-vram-used-gb; unit: "GB"; sub-value: root.vram-utilization; state: root.vram-state; width: (parent.width - 8px) / 2; }
+                MetricTile { label: "Hotspot"; value: root.gpu-hotspot-temperature; unit: "°C"; state: root.gpu-hotspot-state; sparkline-path: root.gpu-hotspot-sparkline; width: (parent.width - 8px) / 2; }
+                MetricTile { label: "VRAM"; value: root.gpu-vram-used-gb; unit: "GB"; sub-value: root.vram-utilization; state: root.vram-state; sparkline-path: root.gpu-vram-sparkline; width: (parent.width - 8px) / 2; }
             }
         }
 
@@ -110,7 +118,7 @@ export component AppWindow inherits Window {
                 font-size: Typography.body;
             }
             HorizontalLayout {
-                MetricTile { label: "Memory"; value: root.ram-used-gb; unit: "GB"; sub-value: root.ram-utilization; state: root.ram-state; horizontal-stretch: 1; }
+                MetricTile { label: "Memory"; value: root.ram-used-gb; unit: "GB"; sub-value: root.ram-utilization; state: root.ram-state; sparkline-path: root.ram-sparkline; horizontal-stretch: 1; }
             }
         }
     }
