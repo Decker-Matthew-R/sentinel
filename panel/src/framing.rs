@@ -33,6 +33,23 @@ pub async fn read_frame<R: tokio::io::AsyncRead + Unpin>(
 mod tests {
     use super::*;
     use crate::proto::sentinel::v1::{Heartbeat, MetricsSnapshot, envelope};
+    use tokio::io::AsyncWriteExt;
+
+    #[tokio::test]
+    async fn read_frame_returns_error_on_eof() {
+        let (writer, mut reader) = tokio::io::duplex(1024);
+        drop(writer);
+        assert!(read_frame(&mut reader).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn read_frame_returns_error_on_truncated_payload() {
+        let (mut writer, mut reader) = tokio::io::duplex(1024);
+        writer.write_all(&[0x00, 0x00, 0x00, 0x10]).await.unwrap();
+        writer.write_all(&[0xFF, 0xFF]).await.unwrap();
+        drop(writer);
+        assert!(read_frame(&mut reader).await.is_err());
+    }
 
     #[tokio::test]
     async fn write_and_read_round_trip_a_single_frame() {

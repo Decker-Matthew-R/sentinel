@@ -1,6 +1,6 @@
 # Roadmap — Sentinel
 
-> Status: **In progress** — M0 complete, working towards M2 (Walking skeleton). This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
+> Status: **In progress** — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 in progress — #56–59 complete, #60 unblocked. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
 
 ## Goals of the project
 
