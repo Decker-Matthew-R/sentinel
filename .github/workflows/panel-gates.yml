@@ -62,7 +62,7 @@ jobs:
           workspaces: panel
 
       - name: Add aarch64-linux-android Rust target
-        run: rustup target add aarch64-linux-android
+        run: rustup target add aarch64-linux-android --toolchain 1.99.1
 
       - name: Install cargo-ndk
         run: cargo install cargo-ndk --locked
