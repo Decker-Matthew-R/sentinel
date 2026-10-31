@@ -78,7 +78,7 @@ protoc --version
 
 > The C# agent does not need this — `Grpc.Tools` bundles its own `protoc` for Windows, Linux, and macOS.
 
-### 4. Rust
+### 5. Rust
 
 [Rust](https://www.rust-lang.org) is installed via [rustup](https://rustup.rs), the official toolchain manager:
 
@@ -177,6 +177,18 @@ The terminal window running the fake-agent prints the active scenario and tick n
 ```
 [Gaming — Critical] tick 3/8 — uptime 26s
 ```
+
+---
+
+## Android build (tablet deployment)
+
+> **Note:** The Android build toolchain setup is covered by story #100. The steps below will be filled in once that story is complete. For local development and testing, the desktop build above is sufficient — the fake-agent connects to the panel running as a desktop window.
+
+Requirements once #100 is done:
+- Android SDK (via Android Studio or command-line tools)
+- Android NDK (version to be pinned in #100)
+- `cargo-ndk` Rust tool
+- `aarch64-linux-android` Rust target
 
 ---
 

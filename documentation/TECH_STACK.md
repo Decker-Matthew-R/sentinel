@@ -19,15 +19,15 @@ flowchart TB
     subgraph LINK["Link"]
         direction TB
         l1["USB-C cable — power + data"]
-        l2["USB gadget networking (CDC-NCM)"]
+        l2["Android USB tethering (RNDIS)"]
         l3["TCP + length-prefixed Protobuf"]
     end
 
     subgraph TABSIDE["Tablet"]
         direction TB
-        t1["postmarketOS (Alpine, musl, OpenRC)"]
+        t1["Android (Samsung Galaxy Tab A11)"]
         t2["Rust — tokio for networking"]
-        t3["Slint — LinuxKMS backend, no compositor"]
+        t3["Slint — Android backend"]
         t4["prost — generated messages"]
         t5["cargo test + Slint testing backend"]
     end
@@ -36,7 +36,7 @@ flowchart TB
         direction TB
         x1["Monorepo — proto / agent / panel / tools / deploy"]
         x2["GitHub Actions — build, test, release"]
-        x3["cross / Docker — aarch64-musl builds"]
+        x3["Android NDK + cargo-ndk — aarch64-android builds"]
         x4["Fake agent — UI dev without hardware"]
     end
 
@@ -57,28 +57,28 @@ To upgrade: update the version in the config file, run a local build to verify, 
 
 ## Decisions
 
-### 1. Hardware: ARM tablet running postmarketOS
+### 1. Hardware: Samsung Galaxy Tab A11 (Android)
 
-Candidates: used Xiaomi Pad 5 (better screen, more setup) or PineTab2 (Linux out of the box, weaker specs). Final pick pending.
+**Chosen.** Samsung Galaxy Tab A11 running stock Android with the Sentinel APK deployed via ADB.
 
 | Pros | Cons |
 |---|---|
-| ARM USB controllers support **gadget mode**, enabling single-cable power + data | Community-supported ports: some hardware may not work fully |
-| postmarketOS supports USB networking out of the box | Xiaomi requires bootloader unlock and flashing |
-| Real Linux: full control, great learning | Battery charge-limit support varies per device |
-| Cheap used hardware fits the ~$200 budget | Fewer tutorials than mainstream distros |
+| Android USB tethering (RNDIS) enables single-cable power + data to the PC | USB tethering must be enabled manually on first setup |
+| No bootloader unlock or custom OS — ships ready to use | Less low-level OS control than a custom Linux install |
+| Samsung battery protection mode limits charging to 85% for always-plugged health | Samsung One UI adds some Android customisation overhead |
+| Widely available, strong hardware for the price | |
 
 **Alternatives considered:**
-- *Surface Go (x86 + linux-surface)* — excellent Linux support, but its USB ports are host-only (no gadget mode) and it is picky about low-power USB-C charging.
-- *Android tablet + kiosk app* — easiest and cheapest, but less control and less learning; not a Linux appliance.
+- *postmarketOS tablet (Xiaomi Pad 5 / PineTab2)* — more Linux control, but requires bootloader unlock, flashing, and community-supported drivers. Ruled out in favour of a working device with a reliable Android ecosystem.
+- *Surface Go (x86 + linux-surface)* — excellent Linux support, but USB ports are host-only (no gadget/tethering mode) and picky about low-power USB-C charging.
 
-### 2. Link: USB-C with USB gadget networking (CDC-NCM)
+### 2. Link: USB-C with Android USB tethering (RNDIS)
 
 | Pros | Cons |
 |---|---|
 | One cable for power and data; no outlet needed | PC USB-C ports supply limited power (often 7.5–15 W) |
 | No Wi-Fi or Bluetooth pairing; low latency, very reliable | Tablet battery stays plugged in permanently |
-| Shows up on Windows as a normal network adapter | Depends on tablet kernel gadget support |
+| Android USB tethering shows up on Windows as a normal network adapter | USB tethering must be enabled in Android settings |
 | Plain TCP sockets: transferable networking knowledge | |
 
 **Alternatives considered:**
@@ -127,19 +127,19 @@ Candidates: used Xiaomi Pad 5 (better screen, more setup) or PineTab2 (Linux out
 | Pros | Cons |
 |---|---|
 | Single small native binary, no runtime | Steeper learning curve (ownership, async) |
-| Memory safety for a long-running appliance | Cross-compiling to musl adds build setup |
+| Memory safety for a long-running appliance | Android NDK cross-compile adds build setup |
 | tokio is a mature async networking stack | |
 | Strong learning value | |
 
-### 8. UI toolkit: Slint (LinuxKMS backend)
+### 8. UI toolkit: Slint (Android backend)
 
 | Pros | Cons |
 |---|---|
-| Renders straight to the display: no X11/Wayland, faster boot, true appliance feel | LinuxKMS backend is still marked **experimental** |
 | Declarative `.slint` markup, good for polished UIs | Smaller ecosystem than Qt |
-| Same app runs as a desktop window on Windows for fast UI iteration | Fewer ready-made chart widgets (we build sparklines ourselves) |
+| Same app runs as a desktop window on macOS/Windows for fast UI iteration | Fewer ready-made chart widgets (we build sparklines ourselves) |
+| Android backend renders via Android's native surface — no compositor needed | APK packaging requires a thin Java `Activity` shim |
 
-**Fallback:** Qt Quick (C++/QML) with `eglfs` — mature and also compositor-free. Flutter was considered but adds a Dart runtime.
+**Fallback:** Kotlin + Jetpack Compose — native Android UI, larger ecosystem, but requires rewriting all existing Rust panel code.
 
 ### 9. Repo and CI: monorepo + GitHub Actions
 
@@ -147,7 +147,7 @@ Candidates: used Xiaomi Pad 5 (better screen, more setup) or PineTab2 (Linux out
 |---|---|
 | Protocol changes and both consumers change in one PR | CI must build two toolchains |
 | Single place for docs, issues, releases | Larger repo |
-| Actions can run tests, cross-compile aarch64-musl, and publish release artifacts | Self-hosted runner needed if we ever want automatic deploy to the tablet |
+| Actions can run tests, build the Android APK, and publish release artifacts | Self-hosted runner needed if we ever want automatic ADB deploy to the tablet |
 
 ## Proposed repo layout
 
@@ -158,8 +158,8 @@ sentinel/
 ├── panel/            # sentinel-panel — Rust crate + .slint UI files
 ├── tools/
 │   └── fake-agent/   # streams fake metrics for UI development
-├── deploy/           # OpenRC init script, Task Scheduler XML, flashing notes
-├── docs/             # ARCHITECTURE.md, TECH_STACK.md, SPRINTS.md
+├── deploy/           # Task Scheduler XML, ADB deploy notes, device notes
+├── documentation/    # ARCHITECTURE.md, TECH_STACK.md, SPRINTS.md
 └── .github/workflows/
 ```
 
@@ -167,7 +167,7 @@ sentinel/
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Slint KMS backend issues on the chosen tablet | UI won't render | Run Slint inside the `cage` kiosk compositor, or fall back to Qt |
-| Tablet port lacks charge-limit support | Battery wear / swelling over time | Lower brightness; check device support before buying |
-| Insufficient USB power from PC | Tablet slowly drains | Use the board's strongest USB-C header; dim the screen |
+| Slint Android backend rendering issues | UI glitches or won't render | Fall back to Kotlin + Jetpack Compose (full rewrite) |
+| Samsung battery protection mode unreliable | Battery wear / swelling over time | Lower brightness; use an external USB power limiter |
+| Insufficient USB power from PC | Tablet slowly drains | Use the PC's strongest USB-C header; dim the screen |
 | LHM sensor names differ by hardware | Missing or mislabeled metrics | Map sensors by type, not name; hide missing tiles |
