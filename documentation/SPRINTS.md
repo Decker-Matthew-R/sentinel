@@ -5,7 +5,7 @@
 ## Goals of the project
 
 1. **A useful device:** a polished, always-on dashboard and control surface that frees up main-monitor space.
-2. **Learning:** networking (sockets, framing, USB networking, LAN discovery), embedded Linux, Rust, Windows internals, CI/CD.
+2. **Learning:** networking (sockets, framing, USB networking, LAN discovery), Android, Rust, Windows internals, CI/CD.
 3. **Engineering discipline:** TDD on both halves, a versioned protocol, documented decisions.
 
 ## Milestone map
@@ -64,18 +64,18 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 ### Milestone 1 — Hardware bring-up
 
-**Goal:** A tablet running postmarketOS that the PC can reach over a single USB-C cable.
+**Goal:** A Samsung Galaxy Tab A11 running Android that the PC can reach over a single USB-C cable, with Sentinel deployed and booting automatically.
 
-- Choose and buy the tablet (Xiaomi Pad 5 or PineTab2; see `TECH_STACK.md`).
-- Unlock the bootloader if needed and flash postmarketOS.
-- CI: add an `aarch64-unknown-linux-musl` cross-compile artifact (depends on hardware choice).
-- Confirm USB networking with Windows: the tablet appears as a network adapter and responds to ping.
-- Check battery charge-limit support in Linux.
-- Measure whether the PC's USB-C port supplies enough power at the brightness you want.
-- Record findings in `docs/` (flashing notes, power results, charge-limit status).
+- [x] #99 — Update all documentation to reflect Android and Samsung Galaxy Tab A11 ✓
+- [ ] #100 — Set up Android build toolchain and CI artifact
+- [ ] #101 — Create Android APK shim and switch to Slint Android backend
+- [ ] #102 — Establish USB networking between tablet and Windows PC *(hardware blocked)*
+- [ ] #103 — Deploy Sentinel to Galaxy Tab A11 and verify display *(hardware blocked)*
+- [ ] #104 — Configure Galaxy Tab A11 to launch Sentinel at boot *(hardware blocked)*
+- [ ] #105 — Document USB power delivery and Samsung battery protection findings *(hardware blocked)*
 
-**Outcomes:** Plug the tablet into the PC and `ping` it over the cable. Open hardware questions answered.
-**Learning:** Flashing Android-class hardware, postmarketOS, USB gadget networking.
+**Outcomes:** Plug the tablet into the PC, `ping` it over the cable, Sentinel launches automatically on boot. Open hardware questions answered.
+**Learning:** Android APK packaging, Slint Android backend, USB tethering networking, Android kiosk/launcher configuration.
 
 ### Milestone 2 — Walking skeleton
 
@@ -94,7 +94,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [ ] #48 — Write and deploy the panel boot service *(hardware blocked)*
 
 **Outcomes:** Power on the tablet → it boots into the app → uptime appears and survives agent restarts.
-**Learning:** TCP sockets, framing, Protobuf codegen, async Rust, OpenRC services, deploying to an aarch64-musl target.
+**Learning:** TCP sockets, framing, Protobuf codegen, async Rust, Android deployment, deploying to an aarch64-android target.
 
 ### Milestone 3 — Metrics pipeline
 
@@ -147,7 +147,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - Soak test: leave it connected for a long stretch; cover PC sleep/wake, agent crash, tablet reboot.
 - Logging on both sides; tray icon status.
 - Decide PC-off behavior (BIOS ErP setting vs. tablet idle/dim mode).
-- CI release workflow: tagged builds publish `sentinel-agent.exe` and the `sentinel-panel` binary as release artifacts.
+- CI release workflow: tagged builds publish `sentinel-agent.exe` and `sentinel-panel.apk` as release artifacts.
 - Update docs to match reality.
 
 **Outcomes:** **v1.0** tagged. Daily use with no babysitting.
@@ -190,7 +190,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - Active: ping sweep of the local subnet.
 - Names: listen for mDNS / SSDP announcements; MAC vendor (OUI) lookup.
 - Optional: router API (e.g. FRITZ!Box TR-064) for connected devices and WAN stats.
-- Option to explore: run discovery on the tablet itself (Linux raw sockets) if it also joins Wi-Fi.
+- Option to explore: run discovery on the tablet itself (Android raw sockets) if it also joins Wi-Fi.
 - Scan only your own network.
 
 **Outcomes:** A live list of devices on the home network with names, IPs, MACs and vendors.

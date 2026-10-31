@@ -11,7 +11,7 @@ The system has two halves connected by a single USB-C cable that carries both **
 | Half | Runs on | Language | Role |
 |---|---|---|---|
 | **Sentinel Agent** | Windows PC | C# (.NET) | Reads sensors, inspects the Steam library, executes whitelisted actions |
-| **Sentinel Panel** | ARM tablet running postmarketOS | Rust + Slint | Renders the dashboard, sends commands |
+| **Sentinel Panel** | Samsung Galaxy Tab A11 (Android) | Rust + Slint | Renders the dashboard, sends commands |
 
 ### Naming conventions
 
@@ -37,7 +37,7 @@ flowchart LR
         apps["Desktop apps<br/>(browser, Task Manager...)"]
     end
 
-    subgraph TAB["Tablet (postmarketOS)"]
+    subgraph TAB["Tablet (Android)"]
         app["Sentinel Panel<br/>(Rust + Slint, fullscreen)"]
     end
 
@@ -68,7 +68,7 @@ flowchart LR
         ls["LinkServer<br/>tokio TCP listener"]
         st["StateStore<br/>ring buffers, link state"]
         vm["ViewModels<br/>thresholds, formatting"]
-        ui["Slint UI<br/>LinuxKMS backend"]
+        ui["Slint UI<br/>Android backend"]
         ls --> st --> vm --> ui
         ui -- "button press" --> ls
     end
@@ -91,7 +91,7 @@ flowchart LR
 
 Runs as a **user-session tray app** started at logon by Task Scheduler with highest privileges (admin is needed for CPU temperature sensors). It must not be a Windows Service: services run in session 0 and cannot open windows on the user's desktop.
 
-### Tablet app (Linux)
+### Tablet app (Android)
 
 | Component | Responsibility |
 |---|---|
@@ -99,14 +99,14 @@ Runs as a **user-session tray app** started at logon by Task Scheduler with high
 | `StateStore` | Current values, ~60 s ring-buffer history per metric, connection state |
 | `ViewModels` | Pure logic: unit formatting, threshold colors (normal / warm / hot), utilization percentages |
 | Nav bar | Bottom tab bar routing between System Status and Command Center; active tab highlighted with `Palette` tokens |
-| Slint UI | Renders directly to the display via KMS/DRM — no X11/Wayland compositor; hosts System Status and Command Center pages |
+| Slint UI | Renders via the Slint Android backend; hosts System Status and Command Center pages |
 
-Threading: the Slint event loop owns the main thread; a tokio runtime handles networking; updates cross to the UI via `slint::invoke_from_event_loop`.
+Threading: the Slint event loop owns the main thread; a tokio runtime handles networking; updates cross to the UI via `slint::invoke_from_event_loop`. On Android the app is packaged as an APK with a thin Java `Activity` shim that loads the Rust `.so`.
 
 ## 4. Link and connection model
 
-- The tablet runs in **USB gadget mode** (CDC-NCM), so Windows sees it as a network adapter.
-- postmarketOS typically gives the tablet a fixed address on the USB link (e.g. `172.16.42.1`) and serves DHCP to the PC.
+- The tablet uses **Android USB tethering** (RNDIS), which makes Windows see it as a standard network adapter.
+- Android assigns the tablet a fixed address on the USB link (e.g. `192.168.42.129`) and serves DHCP to the PC.
 - **The tablet listens; the agent dials out.** The PC never opens a listening port, and the agent always knows where the tablet is.
 - The same cable supplies power from the PC's USB-C port (typically 5 V at 1.5–3 A).
 
@@ -181,17 +181,18 @@ Optional learning extension: TLS (or Noise) over the link with pinned keys.
 flowchart LR
     gh["GitHub Actions"]
     exe["sentinel-agent.exe<br/>(single-file, self-contained)"]
-    bin["sentinel-panel<br/>(aarch64-unknown-linux-musl)"]
+    apk["sentinel-panel.apk<br/>(aarch64-linux-android)"]
     pc["Windows PC<br/>Task Scheduler at logon"]
-    tab["Tablet<br/>OpenRC service, boots to app"]
+    tab["Tablet<br/>Android, boots to app"]
 
     gh --> exe --> pc
-    gh --> bin
-    bin -- "scp over USB link + restart service" --> tab
+    gh --> apk
+    apk -- "adb install over USB link" --> tab
 ```
 
-- postmarketOS is Alpine-based (musl libc), so tablet builds target `aarch64-unknown-linux-musl`.
-- postmarketOS uses OpenRC by default; the app runs as an OpenRC service that starts at boot.
+- The tablet target is `aarch64-linux-android`, built with the Android NDK and `cargo-ndk`.
+- The app is packaged as an APK with a thin Java `Activity` shim that loads the Rust `.so`.
+- The tablet is configured to launch Sentinel automatically at boot (Android kiosk/launcher mode).
 
 ## 8. Failure modes
 
@@ -205,6 +206,6 @@ flowchart LR
 
 ## 9. Open questions
 
-- Does the chosen tablet expose a battery charge limit in Linux? (Always-plugged battery health.)
+- Does Samsung One UI's battery protection mode (85% charge limit) work reliably for an always-plugged device?
 - Does the PC's USB-C port supply enough power at the brightness we want?
 - Should the tablet stay powered when the PC is off?

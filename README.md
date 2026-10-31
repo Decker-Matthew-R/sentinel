@@ -4,7 +4,7 @@
 
 Sentinel sits beside your PC and shows live hardware metrics — temperatures, utilization, clocks, uptime — with one-touch buttons for things like launching Steam or jumping back into your last game. It keeps that information off your main monitor, always visible at a glance.
 
-> **Status:** 🚧 In progress — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 complete. M5 in progress — #62 (VDF parser) and #96 (nav bar + Command Center shell) done. Hardware choice still pending.
+> **Status:** 🚧 In progress — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 complete. M5 in progress — #62 and #96 done. M1 in progress — hardware chosen (Samsung Galaxy Tab A11, Android).
 
 ## Index
 
@@ -72,8 +72,8 @@ See the [Roadmap](documentation/SPRINTS.md) for the full milestone plan.
 | Area | Choice |
 |---|---|
 | PC agent | C# / .NET, LibreHardwareMonitorLib |
-| Tablet app | Rust, Slint UI (direct-to-display, no desktop environment) |
-| Tablet OS | postmarketOS (Linux) |
+| Tablet app | Rust, Slint UI (Android backend) |
+| Tablet OS | Android (Samsung Galaxy Tab A11) |
 | Link | USB-C power + USB networking, TCP |
 | Protocol | Length-prefixed Protobuf |
 | CI | GitHub Actions |
@@ -88,7 +88,7 @@ sentinel/
 ├── agent/          # Sentinel.Agent — C# solution (src/ + tests/)
 ├── panel/          # sentinel-panel — Rust crate + .slint UI files
 ├── tools/          # fake-agent for UI development without hardware
-├── deploy/         # init scripts, Task Scheduler config, flashing notes
+├── deploy/         # Task Scheduler config, ADB deploy notes, device notes
 └── documentation/  # design documents
 ```
 
