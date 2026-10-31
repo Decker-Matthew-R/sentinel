@@ -67,6 +67,15 @@ else
   echo -e "  ${YELLOW}⚠${RESET}  gitleaks not installed — skipping secret scan (run: brew install gitleaks)"
 fi
 
+# ── Build ───────────────────────────────────────────────────────────────────────
+header "Build"
+if command -v cargo-ndk &> /dev/null && [ -n "${ANDROID_NDK_HOME:-}" ]; then
+  run_step "Panel — Android build (cargo ndk)" \
+    bash -c "cd panel && cargo ndk -t arm64-v8a build"
+else
+  echo -e "  ${YELLOW}⚠${RESET}  Android build skipped — install cargo-ndk and set ANDROID_NDK_HOME (see DEV_SETUP.md)"
+fi
+
 # ── Tests ───────────────────────────────────────────────────────────────────────
 header "Tests"
 run_step "Agent — dotnet test" \

@@ -182,13 +182,70 @@ The terminal window running the fake-agent prints the active scenario and tick n
 
 ## Android build (tablet deployment)
 
-> **Note:** The Android build toolchain setup is covered by story #100. The steps below will be filled in once that story is complete. For local development and testing, the desktop build above is sufficient — the fake-agent connects to the panel running as a desktop window.
+> **Note:** The Android build is only needed to deploy to the Galaxy Tab A11. For local development and testing, the desktop build above is sufficient — the fake-agent connects to the panel running as a desktop window.
 
-Requirements once #100 is done:
-- Android SDK (via Android Studio or command-line tools)
-- Android NDK (version to be pinned in #100)
-- `cargo-ndk` Rust tool
-- `aarch64-linux-android` Rust target
+### 1. Android command-line tools
+
+Go to [developer.android.com/studio#command-line-tools-only](https://developer.android.com/studio#command-line-tools-only) and download the macOS package. Then unzip it into a new SDK directory (the `latest` subdirectory name is required by `sdkmanager`):
+
+```bash
+mkdir -p ~/android-sdk/cmdline-tools/latest
+unzip ~/Downloads/commandlinetools-mac_*.zip -d /tmp/cmdline-tools
+mv /tmp/cmdline-tools/cmdline-tools/* ~/android-sdk/cmdline-tools/latest/
+```
+
+Add to your `~/.zshrc`:
+
+```bash
+export ANDROID_SDK_ROOT="$HOME/android-sdk"
+export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
+export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+```
+
+Reload your shell and verify:
+
+```bash
+source ~/.zshrc
+sdkmanager --version
+```
+
+### 2. Android NDK r27c
+
+```bash
+sdkmanager "ndk;27.2.12479018"
+```
+
+Verify:
+
+```bash
+ls $ANDROID_NDK_HOME
+```
+
+### 3. cargo-ndk
+
+```bash
+cargo install cargo-ndk
+```
+
+Verify:
+
+```bash
+cargo ndk --version
+```
+
+### 4. aarch64-linux-android Rust target
+
+```bash
+rustup target add aarch64-linux-android
+```
+
+### Build
+
+```bash
+cargo ndk -t arm64-v8a build --manifest-path panel/Cargo.toml
+```
+
+The binary lands at `panel/target/aarch64-linux-android/debug/sentinel-panel`. This confirms the Rust code compiles for Android. APK packaging is covered by story #101.
 
 ---
 

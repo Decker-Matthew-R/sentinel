@@ -1,6 +1,6 @@
 # Roadmap — Sentinel
 
-> Status: **In progress** — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 functionally complete — #56–60 done, #61 hardware blocked. M5 in progress — #62 and #96 done. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
+> Status: **In progress** — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 functionally complete — #56–60 done, #61 hardware blocked. M5 in progress — #62 and #96 done. M1 in progress — #99 and #100 done. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
 
 ## Goals of the project
 
@@ -67,7 +67,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 **Goal:** A Samsung Galaxy Tab A11 running Android that the PC can reach over a single USB-C cable, with Sentinel deployed and booting automatically.
 
 - [x] #99 — Update all documentation to reflect Android and Samsung Galaxy Tab A11 ✓
-- [ ] #100 — Set up Android build toolchain and CI artifact
+- [x] #100 — Set up Android build toolchain and CI artifact ✓
 - [ ] #101 — Create Android APK shim and switch to Slint Android backend
 - [ ] #102 — Establish USB networking between tablet and Windows PC *(hardware blocked)*
 - [ ] #103 — Deploy Sentinel to Galaxy Tab A11 and verify display *(hardware blocked)*
