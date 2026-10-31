@@ -29,6 +29,7 @@
 | `gitleaks` | latest | `ci-gates-check.sh` | Scans commits for secrets and credentials locally, matching what `secret-scan.yml` enforces in CI | MIT |
 | `protoc` | latest | `ci-gates-check.sh`, `panel-gates.yml` | Compiles `sentinel.proto` at build time for the Rust panel (via `prost-build`). Install via `brew install protobuf` | BSD 3-Clause |
 | `cargo-audit` | 0.22.2 | `ci-gates-check.sh`, `panel-gates.yml`, `scheduled-cve-scan.yml` | Scans `Cargo.lock` against the RustSec advisory database for known CVEs | Apache 2.0 / MIT |
+| `cargo-ndk` | latest | `ci-gates-check.sh`, `panel-gates.yml` | Cross-compiles the Rust panel for Android (`aarch64-linux-android`) by wiring up the Android NDK linker and sysroot | MIT |
 
 ## GitHub Actions
 
@@ -38,3 +39,4 @@
 | `actions/setup-dotnet` | v4 | `agent-gates.yml`, `scheduled-cve-scan.yml` | Installs the .NET SDK version pinned in `global.json` on the CI runner | MIT |
 | `Swatinem/rust-cache` | v2 | `panel-gates.yml`, `scheduled-cve-scan.yml` | Caches Cargo registry and build artifacts to speed up Rust CI runs | MIT |
 | `gitleaks/gitleaks-action` | v2 | `secret-scan.yml` | Scans PR changesets for secrets and credentials; fails the check if any are found | MIT |
+| `actions/upload-artifact` | v4 | `panel-gates.yml` | Uploads the Android build artifact (`.so` / binary) so it can be downloaded from the CI run | MIT |

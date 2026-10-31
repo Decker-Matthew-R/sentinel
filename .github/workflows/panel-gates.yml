@@ -43,3 +43,36 @@ jobs:
 
       - name: Test
         run: cargo test --manifest-path panel/Cargo.toml
+
+  panel-android-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install protobuf compiler
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Install Android NDK r27c
+        run: |
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "ndk;27.2.12479018"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.2.12479018" >> $GITHUB_ENV
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: panel
+
+      - name: Add aarch64-linux-android Rust target
+        run: rustup target add aarch64-linux-android
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
+
+      - name: Build for Android
+        run: cargo ndk -t arm64-v8a build
+        working-directory: panel
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-panel-android
+          path: panel/target/aarch64-linux-android/debug/sentinel-panel
