@@ -7,6 +7,7 @@ var computer = new Computer
     IsCpuEnabled = true,
     IsGpuEnabled = true,
     IsMemoryEnabled = true,
+    IsMotherboardEnabled = true,
 };
 computer.Open();
 
