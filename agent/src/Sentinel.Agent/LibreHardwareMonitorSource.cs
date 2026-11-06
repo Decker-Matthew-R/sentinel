@@ -22,6 +22,10 @@ public class LibreHardwareMonitorSource(Computer computer) : ISensorSource
         var hw = computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);
         if (hw is null) return null;
 
+        Console.WriteLine($"[DIAG] CPU sensors for: {hw.Name}");
+        foreach (var s in hw.Sensors)
+            Console.WriteLine($"  [{s.SensorType}] \"{s.Name}\" = {s.Value}");
+
         var utilization = SensorValue(hw, SensorType.Load, "CPU Total");
         var temp = SensorValue(hw, SensorType.Temperature, "CPU Package")
             ?? SensorValue(hw, SensorType.Temperature, "CPU Core Max")
