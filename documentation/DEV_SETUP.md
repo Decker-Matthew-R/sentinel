@@ -197,9 +197,11 @@ mv /tmp/cmdline-tools/cmdline-tools/* ~/android-sdk/cmdline-tools/latest/
 Add to your `~/.zshrc`:
 
 ```bash
-export ANDROID_SDK_ROOT="$HOME/android-sdk"
-export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
-export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+export ANDROID_HOME="$HOME/android-sdk"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018"
+export ANDROID_NDK_ROOT="$ANDROID_NDK_HOME"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
 
 Reload your shell and verify:
@@ -242,10 +244,137 @@ rustup target add aarch64-linux-android
 ### Build
 
 ```bash
-cargo ndk -t arm64-v8a build --manifest-path panel/Cargo.toml
+cd panel
+cargo ndk -t arm64-v8a build
 ```
 
-The binary lands at `panel/target/aarch64-linux-android/debug/sentinel-panel`. This confirms the Rust code compiles for Android. APK packaging is covered by story #101.
+The binary lands at `panel/target/aarch64-linux-android/debug/sentinel-panel`, confirming the Rust code compiles for Android.
+
+---
+
+## Android emulator (optional — Apple Silicon only)
+
+> **Note:** The ARM64 Android system image runs natively only on Apple Silicon (M1/M2/M3/M4). On Intel Macs the emulator falls back to x86_64 and cannot run an arm64-v8a APK. Skip this section if you are on Intel hardware.
+
+Use this workflow to confirm the panel looks correct on Android without deploying to the physical tablet. For day-to-day iteration, the desktop build is faster.
+
+Once the one-time setup below is complete, the full workflow can be launched in one step from the repo root:
+
+```bash
+./tools/scripts/android-dev-launch.sh
+```
+
+This starts the emulator, waits for boot, port-forwards, installs the APK, and connects the fake-agent automatically. If you have Android Studio installed, add this to your `~/.zshrc` so the script uses the right SDK instead of Android Studio's:
+
+```bash
+export SENTINEL_ANDROID_HOME="$HOME/android-sdk"
+```
+
+### 1. cargo-apk
+
+`cargo-apk` bundles the compiled `cdylib` into an installable APK. It reads the `[package.metadata.android]` section from `panel/Cargo.toml` for the package name and SDK targets.
+
+```bash
+cargo install cargo-apk
+```
+
+Verify:
+
+```bash
+cargo apk version
+```
+
+### 2. Android emulator and system image
+
+```bash
+sdkmanager "emulator" "platform-tools" "platforms;android-34" \
+           "system-images;android-34;google_apis;arm64-v8a" \
+           "build-tools;34.0.0"
+```
+
+Create an AVD named `sentinel`:
+
+```bash
+avdmanager create avd -n sentinel \
+  -k "system-images;android-34;google_apis;arm64-v8a"
+```
+
+When asked "Do you wish to create a custom hardware profile?", answer `no`.
+
+Then set the screen dimensions to match the Galaxy Tab A11 in portrait mode (1200×1900 @ 206 dpi). The interactive setup leaves low-res defaults, so replace them:
+
+```bash
+sed -i '' '/^hw\.lcd\.width=/d' ~/.android/avd/sentinel.avd/config.ini
+sed -i '' '/^hw\.lcd\.height=/d' ~/.android/avd/sentinel.avd/config.ini
+sed -i '' '/^hw\.lcd\.density=/d' ~/.android/avd/sentinel.avd/config.ini
+cat >> ~/.android/avd/sentinel.avd/config.ini <<'EOF'
+hw.lcd.width=1200
+hw.lcd.height=1900
+hw.lcd.density=206
+hw.initialOrientation=portrait
+EOF
+```
+
+Verify:
+
+```bash
+grep hw.lcd ~/.android/avd/sentinel.avd/config.ini
+```
+
+You should see `width=1200`, `height=1900`, `density=206` with no other values for those three keys.
+
+Add the emulator and platform-tools to your PATH (add to `~/.zshrc`):
+
+```bash
+export PATH="$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH"
+```
+
+### 3. Start the emulator
+
+Run the emulator in a separate terminal (or background it with `&`). Use the full path to avoid conflicts if Android Studio is also installed:
+
+```bash
+$ANDROID_HOME/emulator/emulator -avd sentinel
+```
+
+Wait 30–60 seconds for Android to finish booting. Then confirm the device is ready:
+
+```bash
+adb devices
+```
+
+You should see a line like `emulator-5554   device`. If it shows `offline`, wait a few more seconds and run it again. Do not proceed to the next step until the status is `device`.
+
+### 4. Build and deploy the APK
+
+From the `panel/` directory, build the APK, install it, and launch it:
+
+```bash
+cd panel
+cargo apk build --lib
+adb install -r target/debug/apk/sentinel-panel.apk
+adb shell am start -n "com.sentinel.panel/android.app.NativeActivity"
+```
+
+The panel appears on the emulator showing "Waiting for PC".
+
+> Note: use `cargo apk build --lib` rather than `cargo apk run --lib` here — `run` blocks the terminal streaming device output, preventing the next steps from running.
+
+### 5. Connect the fake-agent
+
+The emulator is a separate network namespace. Forward the panel's listen port so `fake-agent` can reach it:
+
+```bash
+adb forward tcp:9000 tcp:9000
+```
+
+Then start the fake-agent from the repo root:
+
+```bash
+cargo run --manifest-path tools/fake-agent/Cargo.toml
+```
+
+The panel should transition from "Waiting for PC" to the live metrics dashboard. The fake-agent cycles through the same scenarios as in the desktop workflow.
 
 ---
 

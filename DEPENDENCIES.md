@@ -30,6 +30,7 @@
 | `protoc` | latest | `ci-gates-check.sh`, `panel-gates.yml` | Compiles `sentinel.proto` at build time for the Rust panel (via `prost-build`). Install via `brew install protobuf` | BSD 3-Clause |
 | `cargo-audit` | 0.22.2 | `ci-gates-check.sh`, `panel-gates.yml`, `scheduled-cve-scan.yml` | Scans `Cargo.lock` against the RustSec advisory database for known CVEs | Apache 2.0 / MIT |
 | `cargo-ndk` | latest | `ci-gates-check.sh`, `panel-gates.yml` | Cross-compiles the Rust panel for Android (`aarch64-linux-android`) by wiring up the Android NDK linker and sysroot | MIT |
+| `cargo-apk` | latest | `DEV_SETUP.md` (local emulator workflow) | Packages the Rust `cdylib` into an installable APK using `[package.metadata.android]` in `Cargo.toml`; also installs and launches the APK on a connected emulator or device | MIT |
 
 ## GitHub Actions
 

@@ -69,11 +69,14 @@ fi
 
 # ── Build ───────────────────────────────────────────────────────────────────────
 header "Build"
-if command -v cargo-ndk &> /dev/null && [ -n "${ANDROID_NDK_HOME:-}" ]; then
+_sdk="${SENTINEL_ANDROID_HOME:-${ANDROID_HOME:-$HOME/android-sdk}}"
+_ndk="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-$(ls -d "$_sdk/ndk/"* 2>/dev/null | head -1)}}"
+_android_jar="${ANDROID_JAR:-$(find "$_sdk/platforms" -maxdepth 2 -name "android.jar" 2>/dev/null | sort | tail -1)}"
+if command -v cargo-ndk &> /dev/null && [ -d "${_ndk:-}" ] && [ -f "${_android_jar:-}" ]; then
   run_step "Panel — Android build (cargo ndk)" \
-    bash -c "cd panel && cargo ndk -t arm64-v8a build"
+    bash -c "export ANDROID_HOME='$_sdk'; export ANDROID_NDK_ROOT='$_ndk'; export ANDROID_JAR='$_android_jar'; cd panel && cargo ndk -t arm64-v8a build"
 else
-  echo -e "  ${YELLOW}⚠${RESET}  Android build skipped — install cargo-ndk and set ANDROID_NDK_HOME (see DEV_SETUP.md)"
+  echo -e "  ${YELLOW}⚠${RESET}  Android build skipped — install cargo-ndk and set ANDROID_NDK_HOME or ANDROID_NDK_ROOT (see DEV_SETUP.md)"
 fi
 
 # ── Tests ───────────────────────────────────────────────────────────────────────
