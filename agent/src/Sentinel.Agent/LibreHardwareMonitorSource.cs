@@ -24,7 +24,11 @@ public class LibreHardwareMonitorSource(Computer computer) : ISensorSource
 
         var utilization = SensorValue(hw, SensorType.Load, "CPU Total");
         var temp = SensorValue(hw, SensorType.Temperature, "CPU Package")
-            ?? hw.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Temperature)?.Value;
+            ?? SensorValue(hw, SensorType.Temperature, "CPU Core Max")
+            ?? SensorValue(hw, SensorType.Temperature, "Core Max")
+            ?? hw.Sensors.Where(s => s.SensorType == SensorType.Temperature && s.Value > 0)
+                         .Select(s => s.Value)
+                         .FirstOrDefault();
 
         if (utilization is null && temp is null) return null;
         return new CpuReading(Utilization: utilization ?? 0f, Temperature: temp ?? 0f);

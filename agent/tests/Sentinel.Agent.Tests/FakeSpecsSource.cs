@@ -3,5 +3,5 @@ namespace Sentinel.Agent;
 public class FakeSpecsSource : ISpecsSource
 {
     public SpecsReading Read() =>
-        new("Fake CPU", "Fake GPU", 32768, "Fake OS 1.0");
+        new("Fake CPU", 8, 16, 5000, "Fake GPU", 8192, 32768, 3200, "DDR4", "Fake OS 1.0");
 }
