@@ -4249,6 +4249,7 @@ name = "sentinel-panel"
 version = "0.1.0"
 dependencies = [
  "i-slint-backend-testing",
+ "jni 0.21.1",
  "prost 0.13.5",
  "prost-build 0.13.5",
  "slint",

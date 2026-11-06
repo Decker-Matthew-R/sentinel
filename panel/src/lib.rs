@@ -531,8 +531,51 @@ pub fn run() {
 }
 
 #[cfg(target_os = "android")]
+fn hide_system_bars(app: &slint::android::AndroidApp) {
+    use jni::objects::{JObject, JValue};
+
+    let Ok(vm) = (unsafe {
+        jni::JavaVM::from_raw(app.vm_as_ptr() as *mut jni::sys::JavaVM)
+    }) else {
+        return;
+    };
+    let Ok(mut env) = vm.attach_current_thread() else {
+        return;
+    };
+    let activity = unsafe { JObject::from_raw(app.activity_as_ptr() as jni::sys::jobject) };
+
+    let Ok(window) = env
+        .call_method(&activity, "getWindow", "()Landroid/view/Window;", &[])
+        .and_then(|v| v.l())
+    else {
+        return;
+    };
+    let Ok(decor_view) = env
+        .call_method(&window, "getDecorView", "()Landroid/view/View;", &[])
+        .and_then(|v| v.l())
+    else {
+        return;
+    };
+
+    let flags: i32 = 0x0100  // SYSTEM_UI_FLAG_LAYOUT_STABLE
+        | 0x0200              // SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+        | 0x0400              // SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        | 0x0002              // SYSTEM_UI_FLAG_HIDE_NAVIGATION
+        | 0x0004              // SYSTEM_UI_FLAG_FULLSCREEN
+        | 0x1000;             // SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+
+    let _ = env.call_method(
+        &decor_view,
+        "setSystemUiVisibility",
+        "(I)V",
+        &[JValue::Int(flags)],
+    );
+}
+
+#[cfg(target_os = "android")]
 #[unsafe(no_mangle)]
 fn android_main(app: slint::android::AndroidApp) {
+    hide_system_bars(&app);
     slint::android::init(app).unwrap();
     run();
 }
