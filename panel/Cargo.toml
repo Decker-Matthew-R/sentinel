@@ -3,10 +3,16 @@ name = "sentinel-panel"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+crate-type = ["cdylib", "lib"]
+
 [dependencies]
 slint = "1"
 prost = "0.13"
 tokio = { version = "1", features = ["full"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+slint = { version = "1", features = ["backend-android-activity-06"] }
 
 [dev-dependencies]
 slint = { version = "1", features = ["system-testing"] }
@@ -15,3 +21,14 @@ i-slint-backend-testing = "1.18"
 [build-dependencies]
 slint-build = "1"
 prost-build = "0.13"
+
+[package.metadata.android]
+package = "com.sentinel.panel"
+build_targets = ["aarch64-linux-android"]
+
+[package.metadata.android.sdk]
+min_sdk_version = 26
+target_sdk_version = 34
+
+[[package.metadata.android.uses_permission]]
+name = "android.permission.INTERNET"

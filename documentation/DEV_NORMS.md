@@ -147,7 +147,7 @@ Something broken that should work. Key fields:
 
 **Rust (panel):** Tests live inline in the same file as the code, inside a `#[cfg(test)] mod tests` block. Run with `cargo test --manifest-path panel/Cargo.toml`. Same TDD approach.
 
-**UI testing:** Slint's `system-testing` feature enables headless component testing via `i-slint-backend-testing`. UI property assertions (default values, state mappings) run in the existing test suite in `panel/src/main.rs`. Because macOS requires the event loop on the main thread, all `AppWindow` assertions are consolidated into a single test (`ui_reflects_all_connection_states`) rather than split across multiple tests.
+**UI testing:** Slint's `system-testing` feature enables headless component testing via `i-slint-backend-testing`. UI property assertions (default values, state mappings) run in the existing test suite in `panel/src/lib.rs`. Because macOS requires the event loop on the main thread, all `AppWindow` assertions are consolidated into a single test (`ui_reflects_all_connection_states`) rather than split across multiple tests.
 
 For visual validation — threshold colours, layout, tile rendering — run `./tools/scripts/dev-launch.sh` and observe the fake-agent's scenario loop. See [Dev Setup](DEV_SETUP.md#fake-data-scenarios) for the full scenario table.
 
