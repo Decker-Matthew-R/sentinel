@@ -143,7 +143,7 @@ Something broken that should work. Key fields:
 
 **C# (agent):** Tests live in `agent/tests/`. Framework is xUnit. Run with `dotnet test agent/`. Write a failing test first, then make it pass.
 
-`FakeSensorSource` and `FakeSpecsSource` live in `agent/tests/Sentinel.Agent.Tests/`, not in the production project. They are test doubles used by unit and integration tests — they do not ship in `sentinel-agent.exe`. For UI development without Windows hardware, use `tools/fake-agent` instead.
+`FakeSensorSource`, `FakeSpecsSource`, and `FakeActionRunner` live in `agent/tests/Sentinel.Agent.Tests/`, not in the production project. They are test doubles used by unit and integration tests — they do not ship in `sentinel-agent.exe`. For UI development without Windows hardware, use `tools/fake-agent` instead.
 
 **Rust (panel):** Tests live inline in the same file as the code, inside a `#[cfg(test)] mod tests` block. Run with `cargo test --manifest-path panel/Cargo.toml`. Same TDD approach.
 

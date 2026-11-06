@@ -5,15 +5,18 @@ mod proto;
 mod state_store;
 mod view_models;
 
-use crate::proto::sentinel::v1::MetricsSnapshot;
+use crate::proto::sentinel::v1::{Command, CommandResult, MetricsSnapshot};
 use connection_state::ConnectionState;
 use link_server::LinkServer;
 use state_store::StateStore;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
-use tokio::sync::watch;
+use tokio::sync::{mpsc, oneshot, watch};
 
 slint::include_modules!();
+
+static REQUEST_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 use view_models::{
     MetricState, cpu_temp_state, cpu_util_state, gpu_hotspot_state, gpu_temp_state, gpu_util_state,
@@ -173,11 +176,15 @@ pub fn run() {
             let (tx, rx) = watch::channel(ConnectionState::Waiting);
             let (store, mut store_rx) = StateStore::new();
             let store = Arc::new(store);
+            let (cmd_tx, mut cmd_rx) =
+                mpsc::channel::<(Command, oneshot::Sender<CommandResult>)>(8);
 
             tokio::spawn({
                 let store = Arc::clone(&store);
                 async move {
-                    server.run(tx, &store, Duration::from_secs(5)).await;
+                    server
+                        .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                        .await;
                 }
             });
 
@@ -458,6 +465,67 @@ pub fn run() {
                 }
             });
 
+            let app_weak_cmd = app.as_weak();
+            app.on_action_pressed({
+                move |action_id| {
+                    let Some(app) = app_weak_cmd.upgrade() else {
+                        return;
+                    };
+                    app.set_action_pending(true);
+                    app.set_action_result("".into());
+
+                    let tx = cmd_tx.clone();
+                    let handle = app_weak_cmd.clone();
+                    let action_id = action_id.to_string();
+
+                    tokio::spawn(async move {
+                        let request_id =
+                            REQUEST_COUNTER.fetch_add(1, Ordering::Relaxed).to_string();
+                        let (result_tx, result_rx) = oneshot::channel::<CommandResult>();
+                        let cmd = Command {
+                            request_id,
+                            action_id,
+                        };
+
+                        if tx.send((cmd, result_tx)).await.is_err() {
+                            let _ = slint::invoke_from_event_loop(move || {
+                                if let Some(app) = handle.upgrade() {
+                                    app.set_action_pending(false);
+                                    app.set_action_result("Not connected".into());
+                                }
+                            });
+                            return;
+                        }
+
+                        let (feedback, success) =
+                            match tokio::time::timeout(Duration::from_secs(10), result_rx).await {
+                                Ok(Ok(r)) if r.success => ("ok".to_string(), true),
+                                Ok(Ok(r)) => (r.error_message.clone(), false),
+                                Ok(Err(_)) => ("No response".to_string(), false),
+                                Err(_) => ("Timed out".to_string(), false),
+                            };
+
+                        let fb = feedback.clone();
+                        let h = handle.clone();
+                        let _ = slint::invoke_from_event_loop(move || {
+                            if let Some(app) = h.upgrade() {
+                                app.set_action_pending(false);
+                                app.set_action_result(fb.into());
+                            }
+                        });
+
+                        if success {
+                            tokio::time::sleep(Duration::from_secs(2)).await;
+                            let _ = slint::invoke_from_event_loop(move || {
+                                if let Some(app) = handle.upgrade() {
+                                    app.set_action_result("".into());
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
             app.run().unwrap();
         });
 }
@@ -712,6 +780,19 @@ mod tests {
         assert_eq!(app.get_os_version().as_str(), "");
         assert!(!app.get_show_specs());
         assert!(!app.get_show_commands());
+        assert!(!app.get_action_pending());
+        assert_eq!(app.get_action_result().as_str(), "");
+
+        app.set_action_pending(true);
+        assert!(app.get_action_pending());
+        app.set_action_pending(false);
+
+        app.set_action_result("ok".into());
+        assert_eq!(app.get_action_result().as_str(), "ok");
+        app.set_action_result("Error: access denied".into());
+        assert_eq!(app.get_action_result().as_str(), "Error: access denied");
+        app.set_action_result("".into());
+        assert_eq!(app.get_action_result().as_str(), "");
 
         let (status, version, uptime) = to_slint_props(&ConnectionState::Connected {
             agent_version: "fake-1.0.0".into(),

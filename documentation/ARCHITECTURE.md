@@ -95,7 +95,7 @@ Runs as a **user-session tray app** started at logon by Task Scheduler with high
 
 | Component | Responsibility |
 |---|---|
-| `LinkServer` | Listens on the USB network interface, authenticates the agent, decodes frames |
+| `LinkServer` | Listens on the USB network interface, authenticates the agent, decodes inbound frames, and writes outbound `Command` frames |
 | `StateStore` | Current values, ~60 s ring-buffer history per metric, connection state |
 | `ViewModels` | Pure logic: unit formatting, threshold colors (normal / warm / hot), utilization percentages |
 | Nav bar | Bottom tab bar routing between System Status and Command Center; active tab highlighted with `Palette` tokens |
@@ -139,8 +139,8 @@ Both timeout and disconnect transition to `Stale` rather than back to `Waiting` 
 | `Capabilities` | Agent → Tablet | After handshake: features and action list the agent supports | Planned (M5) |
 | `Specs` | Agent → Tablet | Once per connection: CPU model/cores/threads/boost clock, GPU model/VRAM, RAM name/total/speed, OS version | Defined in v1 |
 | `GameInfo` | Agent → Tablet | On connect and when it changes: app ID, name, cover art bytes | Planned (M5) |
-| `Command` | Tablet → Agent | Button press: request ID + action ID | Planned (M5) |
-| `CommandResult` | Agent → Tablet | Success or error for a request ID | Planned (M5) |
+| `Command` | Tablet → Agent | Button press: request ID + action ID | Defined in v1 |
+| `CommandResult` | Agent → Tablet | Success or error for a request ID | Defined in v1 |
 
 **Compatibility rule:** never reuse or renumber Protobuf fields. New features add new messages and are announced via `Capabilities`, so older tablet builds keep working.
 
