@@ -534,9 +534,8 @@ pub fn run() {
 fn hide_system_bars(app: &slint::android::AndroidApp) {
     use jni::objects::{JObject, JValue};
 
-    let Ok(vm) = (unsafe {
-        jni::JavaVM::from_raw(app.vm_as_ptr() as *mut jni::sys::JavaVM)
-    }) else {
+    let Ok(vm) = (unsafe { jni::JavaVM::from_raw(app.vm_as_ptr() as *mut jni::sys::JavaVM) })
+    else {
         return;
     };
     let Ok(mut env) = vm.attach_current_thread() else {
@@ -562,7 +561,7 @@ fn hide_system_bars(app: &slint::android::AndroidApp) {
         | 0x0400              // SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         | 0x0002              // SYSTEM_UI_FLAG_HIDE_NAVIGATION
         | 0x0004              // SYSTEM_UI_FLAG_FULLSCREEN
-        | 0x1000;             // SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        | 0x1000; // SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 
     let _ = env.call_method(
         &decor_view,
