@@ -56,6 +56,7 @@ jobs:
         run: |
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "ndk;27.2.12479018"
           echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.2.12479018" >> $GITHUB_ENV
+          echo "ANDROID_JAR=$(find $ANDROID_SDK_ROOT/platforms -maxdepth 2 -name "android.jar" | sort | tail -1)" >> $GITHUB_ENV
 
       - uses: Swatinem/rust-cache@v2
         with:
