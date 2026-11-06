@@ -166,9 +166,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))
@@ -231,9 +233,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -266,9 +270,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -312,9 +318,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -355,9 +363,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -394,7 +404,11 @@ mod tests {
 
         tokio::spawn({
             let store = Arc::clone(&store);
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await }
+            async move {
+                server
+                    .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                    .await
+            }
         });
 
         {
@@ -443,9 +457,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))
@@ -491,9 +507,11 @@ mod tests {
         let (store, mut store_rx) = StateStore::new();
         let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))
@@ -537,7 +555,11 @@ mod tests {
 
         tokio::spawn({
             let store = Arc::clone(&store);
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await }
+            async move {
+                server
+                    .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                    .await
+            }
         });
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -582,7 +604,11 @@ mod tests {
 
         tokio::spawn({
             let store = Arc::clone(&store);
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await }
+            async move {
+                server
+                    .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                    .await
+            }
         });
 
         {
@@ -628,9 +654,11 @@ mod tests {
         let (store, mut store_rx) = StateStore::new();
         let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -674,9 +702,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let (cmd_tx, mut cmd_rx) = mpsc::channel(8);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))
@@ -721,9 +751,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let (cmd_tx, mut cmd_rx) = mpsc::channel(8);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))
@@ -782,9 +814,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let (cmd_tx, mut cmd_rx) = mpsc::channel(8);
 
-        tokio::spawn(
-            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
-        );
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                .await
+        });
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))

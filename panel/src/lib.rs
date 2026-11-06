@@ -182,7 +182,9 @@ pub fn run() {
             tokio::spawn({
                 let store = Arc::clone(&store);
                 async move {
-                    server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await;
+                    server
+                        .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                        .await;
                 }
             });
 
@@ -480,7 +482,10 @@ pub fn run() {
                         let request_id =
                             REQUEST_COUNTER.fetch_add(1, Ordering::Relaxed).to_string();
                         let (result_tx, result_rx) = oneshot::channel::<CommandResult>();
-                        let cmd = Command { request_id, action_id };
+                        let cmd = Command {
+                            request_id,
+                            action_id,
+                        };
 
                         if tx.send((cmd, result_tx)).await.is_err() {
                             let _ = slint::invoke_from_event_loop(move || {
