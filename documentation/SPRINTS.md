@@ -1,6 +1,6 @@
 # Roadmap — Sentinel
 
-> Status: **In progress** — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 functionally complete — #56–60 done, #61 hardware blocked. M5 in progress — #62, #96, #63, and #64 done; #65 and #66 hardware blocked. M1 in progress — #99, #100, #101, #102, and #103 done; #104, #105, and #122 remaining. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
+> Status: **In progress** — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 functionally complete — #56–60 done, #61 hardware blocked. M5 in progress — #62, #96, #63, #64, and #123 done; #65 and #66 hardware blocked. M1 in progress — #99, #100, #101, #102, and #103 done; #104, #105, and #122 remaining. Continuous tasks: #112 done. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
 
 ## Goals of the project
 
@@ -133,7 +133,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] #96 — Add navigation bar and Command Center shell
 - [x] #63 — Agent: `ActionRunner` validates action IDs and executes whitelisted commands ✓
 - [x] #64 — Panel sends `Command` on button press and handles `CommandResult` ✓
-- [ ] #123 — Fake-agent responds to `Command` frames with fake `CommandResult`
+- [x] #123 — Fake-agent responds to `Command` frames with fake `CommandResult` ✓
 - [ ] #65 — `SteamLibrary` locates install, last-played game, and app names *(hardware blocked)*
 - [ ] #66 — Load cover art as `GameInfo`, display game card, and launch last-played game *(hardware blocked)*
 
