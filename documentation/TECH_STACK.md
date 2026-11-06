@@ -1,6 +1,6 @@
 # Tech Stack — Sentinel
 
-> Status: **Proposed**. Each choice lists its pros, cons, and the alternatives considered, so future-us knows *why*.
+> Status: **Adopted**. Each choice lists its pros, cons, and the alternatives considered, so future-us knows *why*.
 
 ## Stack at a glance
 
