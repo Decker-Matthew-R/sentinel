@@ -1,6 +1,6 @@
 # Architecture — Sentinel
 
-> Status: **Proposed**. This document describes the target design. Update it as decisions change.
+> Status: **Adopted**. This document reflects the current design. Update it as decisions change.
 
 ## 1. Overview
 
@@ -106,7 +106,7 @@ Threading: the Slint event loop owns the main thread; a tokio runtime handles ne
 ## 4. Link and connection model
 
 - The tablet uses **Android USB tethering** (RNDIS), which makes Windows see it as a standard network adapter.
-- Android assigns the tablet a fixed address on the USB link (e.g. `192.168.42.129`) and serves DHCP to the PC.
+- Android assigns the tablet a fixed address on the USB link (`10.186.188.235`) and serves DHCP to the PC.
 - **The tablet listens; the agent dials out.** The PC never opens a listening port, and the agent always knows where the tablet is.
 - The same cable supplies power from the PC's USB-C port (typically 5 V at 1.5–3 A).
 
@@ -193,7 +193,7 @@ flowchart LR
 - The tablet target is `aarch64-linux-android`, built with the Android NDK and `cargo-ndk`.
 - The app is packaged as an APK with a thin Java `Activity` shim that loads the Rust `.so`.
 - The app runs in immersive sticky mode — system bars are hidden on launch and reappear temporarily on edge swipe, giving Sentinel the full screen.
-- The tablet is configured to auto-launch Sentinel at boot via a `BOOT_COMPLETED` broadcast receiver in the APK shim. The tablet remains a normal Android device — other apps are accessible.
+- The tablet is not configured for auto-launch at boot — it is permanently plugged in and rarely reboots, so a manual tap to relaunch after a rare reboot is acceptable.
 - See `deploy/adb-deploy.md` for the full deployment guide.
 
 ## 8. Failure modes
@@ -208,6 +208,5 @@ flowchart LR
 
 ## 9. Open questions
 
-- Does Samsung One UI's battery protection mode (85% charge limit) work reliably for an always-plugged device? *(tracked in #120)*
-- Does the PC's USB-C port supply enough power at the brightness we want? *(tracked in #105)*
+- Does the PC's USB-C port supply enough power at the brightness we want? *(not yet measured — monitoring battery level in daily use; see `deploy/power-and-battery.md`)*
 - Should the tablet stay powered when the PC is off? *(tracked in #120)*
