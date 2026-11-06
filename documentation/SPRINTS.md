@@ -71,8 +71,9 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] #101 — Create Android APK shim and switch to Slint Android backend ✓
 - [ ] #102 — Establish USB networking between tablet and Windows PC *(hardware blocked)*
 - [ ] #103 — Deploy Sentinel to Galaxy Tab A11 and verify display *(hardware blocked)*
-- [ ] #104 — Configure Galaxy Tab A11 to launch Sentinel at boot *(hardware blocked)*
+- [ ] #104 — Configure Galaxy Tab A11 to auto-launch Sentinel at boot *(hardware blocked)*
 - [ ] #105 — Document USB power delivery and Samsung battery protection findings *(hardware blocked)*
+- [ ] #122 — Windows dev environment setup guide *(hardware blocked)*
 
 **Outcomes:** Plug the tablet into the PC, `ping` it over the cable, Sentinel launches automatically on boot. Open hardware questions answered.
 **Learning:** Android APK packaging, Slint Android backend, USB tethering networking, Android kiosk/launcher configuration.
@@ -91,7 +92,6 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] #45 — Build `tools/fake-agent` for UI development without hardware
 - [x] #46 — Panel shows connection state: Waiting for PC, Connected, and Stale
 - [x] #47 — Panel displays live uptime from the agent
-- [ ] #48 — Write and deploy the panel boot service *(hardware blocked)*
 
 **Outcomes:** Power on the tablet → it boots into the app → uptime appears and survives agent restarts.
 **Learning:** TCP sockets, framing, Protobuf codegen, async Rust, Android deployment, deploying to an aarch64-android target.
@@ -133,6 +133,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] #96 — Add navigation bar and Command Center shell
 - [x] #63 — Agent: `ActionRunner` validates action IDs and executes whitelisted commands ✓
 - [x] #64 — Panel sends `Command` on button press and handles `CommandResult` ✓
+- [ ] #123 — Fake-agent responds to `Command` frames with fake `CommandResult`
 - [ ] #65 — `SteamLibrary` locates install, last-played game, and app names *(hardware blocked)*
 - [ ] #66 — Load cover art as `GameInfo`, display game card, and launch last-played game *(hardware blocked)*
 
@@ -143,12 +144,14 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 
 **Goal:** Reliable enough to forget about.
 
-- Pre-shared token authentication in the handshake.
-- Soak test: leave it connected for a long stretch; cover PC sleep/wake, agent crash, tablet reboot.
-- Logging on both sides; tray icon status.
-- Decide PC-off behavior (BIOS ErP setting vs. tablet idle/dim mode).
-- CI release workflow: tagged builds publish `sentinel-agent.exe` and `sentinel-panel.apk` as release artifacts.
-- Update docs to match reality.
+- [ ] #115 — Pre-shared token authentication in the handshake
+- [ ] #116 — Agent tray icon with connection status
+- [ ] #117 — Agent structured logging to file
+- [ ] #118 — Panel structured logging
+- [ ] #119 — Soak test: sustained connection through sleep, crash, and reboot
+- [ ] #120 — Document PC-off behavior and BIOS ErP setting
+- [ ] #114 — CI release workflow: tagged builds publish `sentinel-agent.exe` and `sentinel-panel.apk` as release artifacts
+- [ ] #121 — Cut v1.0 release
 
 **Outcomes:** **v1.0** tagged. Daily use with no babysitting.
 **Learning:** Release engineering, resilience testing, basic threat modeling.

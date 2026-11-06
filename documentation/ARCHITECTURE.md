@@ -123,7 +123,7 @@ stateDiagram-v2
 
 The UI shows each state explicitly: a "waiting for PC" screen, a dimmed or flagged dashboard when data is stale, and the live dashboard when connected.
 
-Both timeout and disconnect transition to `Stale` rather than back to `Waiting` — the panel has seen an agent before, so "stale data" is more informative than "no agent." A `Handshaking` intermediate state will be reintroduced when pre-shared token auth is added (M6).
+Both timeout and disconnect transition to `Stale` rather than back to `Waiting` — the panel has seen an agent before, so "stale data" is more informative than "no agent." A `Handshaking` intermediate state will be reintroduced when pre-shared token auth is added (#115).
 
 ## 5. Protocol
 
@@ -192,7 +192,7 @@ flowchart LR
 
 - The tablet target is `aarch64-linux-android`, built with the Android NDK and `cargo-ndk`.
 - The app is packaged as an APK with a thin Java `Activity` shim that loads the Rust `.so`.
-- The tablet is configured to launch Sentinel automatically at boot (Android kiosk/launcher mode).
+- The tablet is configured to auto-launch Sentinel at boot via a `BOOT_COMPLETED` broadcast receiver in the APK shim. The tablet remains a normal Android device — other apps are accessible.
 
 ## 8. Failure modes
 
@@ -206,6 +206,6 @@ flowchart LR
 
 ## 9. Open questions
 
-- Does Samsung One UI's battery protection mode (85% charge limit) work reliably for an always-plugged device?
-- Does the PC's USB-C port supply enough power at the brightness we want?
-- Should the tablet stay powered when the PC is off?
+- Does Samsung One UI's battery protection mode (85% charge limit) work reliably for an always-plugged device? *(tracked in #120)*
+- Does the PC's USB-C port supply enough power at the brightness we want? *(tracked in #105)*
+- Should the tablet stay powered when the PC is off? *(tracked in #120)*
