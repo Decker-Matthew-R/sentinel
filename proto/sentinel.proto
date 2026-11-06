@@ -11,6 +11,8 @@ message Envelope {
     Heartbeat heartbeat = 3;
     MetricsSnapshot metrics_snapshot = 4;
     Specs specs = 5;
+    Command command = 6;
+    CommandResult command_result = 7;
   }
 }
 
@@ -56,4 +58,15 @@ message Specs {
   uint64 gpu_vram_total_mb = 8;
   uint32 ram_speed_mhz = 9;
   string ram_name = 10;
+}
+
+message Command {
+  string request_id = 1;
+  string action_id = 2;
+}
+
+message CommandResult {
+  string request_id = 1;
+  bool success = 2;
+  string error_message = 3;
 }

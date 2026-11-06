@@ -18,7 +18,7 @@ public class LinkClientTest
         var fakeSpecs = new FakeSpecsSource();
         var clientTask = Task.Run(() =>
         {
-            var client = new LinkClient("127.0.0.1", port, new SensorPoller(new FakeSensorSource()), fakeSpecs);
+            var client = new LinkClient("127.0.0.1", port, new SensorPoller(new FakeSensorSource()), fakeSpecs, new FakeActionRunner());
             return client.RunAsync(cts.Token);
         });
 
@@ -40,6 +40,44 @@ public class LinkClientTest
         var metrics = await FrameReader.ReadAsync(stream);
         Assert.Equal(Envelope.PayloadOneofCase.MetricsSnapshot, metrics.PayloadCase);
         Assert.True(metrics.MetricsSnapshot.UptimeSeconds > 0);
+
+        await cts.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => clientTask);
+
+        listener.Stop();
+    }
+
+    [Fact]
+    public async Task LinkClient_responds_to_Command_with_CommandResult()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        using var cts = new CancellationTokenSource();
+
+        var clientTask = Task.Run(() =>
+        {
+            var client = new LinkClient("127.0.0.1", port, new SensorPoller(new FakeSensorSource()), new FakeSpecsSource(), new FakeActionRunner());
+            return client.RunAsync(cts.Token);
+        });
+
+        using var server = await listener.AcceptTcpClientAsync();
+        var stream = server.GetStream();
+
+        await FrameReader.ReadAsync(stream); // Hello
+        await FrameReader.ReadAsync(stream); // Specs
+
+        await FrameWriter.WriteAsync(stream, new Envelope
+        {
+            Version = 1,
+            Command = new Command { RequestId = "req-1", ActionId = "open-notepad" }
+        });
+
+        var response = await FrameReader.ReadAsync(stream);
+        Assert.Equal(Envelope.PayloadOneofCase.CommandResult, response.PayloadCase);
+        Assert.Equal("req-1", response.CommandResult.RequestId);
+        Assert.True(response.CommandResult.Success);
 
         await cts.CancelAsync();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => clientTask);
