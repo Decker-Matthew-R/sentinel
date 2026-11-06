@@ -13,6 +13,7 @@ tokio = { version = "1", features = ["full"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
 slint = { version = "1", features = ["backend-android-activity-06"] }
+jni = { version = "0.21", default-features = false }
 
 [dev-dependencies]
 slint = { version = "1", features = ["system-testing"] }

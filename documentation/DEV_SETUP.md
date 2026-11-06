@@ -378,6 +378,16 @@ The panel should transition from "Waiting for PC" to the live metrics dashboard.
 
 ---
 
+## Physical device deployment
+
+To deploy to the Galaxy Tab A11 instead of the emulator, see [`deploy/adb-deploy.md`](../deploy/adb-deploy.md) for the full step-by-step guide covering:
+
+- One-time tablet setup (Developer Options, USB Debugging, Auto Blocker)
+- Building and installing the APK via ADB
+- Connecting the fake-agent over a forwarded port for on-device testing
+
+---
+
 ## Format and lint
 
 Before pushing, run the CI gates check script — it auto-formats both halves, verifies linting, and runs all tests in one step:

@@ -192,7 +192,9 @@ flowchart LR
 
 - The tablet target is `aarch64-linux-android`, built with the Android NDK and `cargo-ndk`.
 - The app is packaged as an APK with a thin Java `Activity` shim that loads the Rust `.so`.
+- The app runs in immersive sticky mode — system bars are hidden on launch and reappear temporarily on edge swipe, giving Sentinel the full screen.
 - The tablet is configured to auto-launch Sentinel at boot via a `BOOT_COMPLETED` broadcast receiver in the APK shim. The tablet remains a normal Android device — other apps are accessible.
+- See `deploy/adb-deploy.md` for the full deployment guide.
 
 ## 8. Failure modes
 

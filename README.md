@@ -4,7 +4,7 @@
 
 Sentinel sits beside your PC and shows live hardware metrics — temperatures, utilization, clocks, uptime — with one-touch buttons for things like launching Steam or jumping back into your last game. It keeps that information off your main monitor, always visible at a glance.
 
-> **Status:** 🚧 In progress — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 complete. M5 in progress — #62, #96, #63, and #64 done; #65 and #66 hardware blocked. M1 in progress — #99, #100, and #101 done.
+> **Status:** 🚧 In progress — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 complete. M5 in progress — #62, #96, #63, and #64 done; #65 and #66 hardware blocked. M1 in progress — #99, #100, #101, #102, and #103 done; #104, #105, and #122 remaining.
 
 ## Index
 
