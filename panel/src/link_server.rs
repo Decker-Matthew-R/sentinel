@@ -1,10 +1,11 @@
 use crate::connection_state::ConnectionState;
-use crate::framing::read_frame;
-use crate::proto::sentinel::v1::envelope;
+use crate::framing::{read_frame, write_frame};
+use crate::proto::sentinel::v1::{Command, CommandResult, Envelope, envelope};
 use crate::state_store::StateStore;
+use std::collections::HashMap;
 use std::time::Duration;
 use tokio::net::TcpListener;
-use tokio::sync::watch;
+use tokio::sync::{mpsc, oneshot, watch};
 use tokio::time::timeout;
 
 pub struct LinkServer {
@@ -27,6 +28,7 @@ impl LinkServer {
         tx: watch::Sender<ConnectionState>,
         store: &StateStore,
         heartbeat_timeout: Duration,
+        cmd_rx: &mut mpsc::Receiver<(Command, oneshot::Sender<CommandResult>)>,
     ) {
         loop {
             let (mut stream, _) = match self.listener.accept().await {
@@ -51,35 +53,66 @@ impl LinkServer {
             })
             .ok();
 
+            let (mut read_half, mut write_half) = stream.into_split();
+            let mut pending: HashMap<String, oneshot::Sender<CommandResult>> = HashMap::new();
             let mut count = 0u64;
+
             loop {
-                match timeout(heartbeat_timeout, read_frame(&mut stream)).await {
-                    Ok(Ok(envelope)) => {
-                        count += 1;
-                        match envelope.payload {
-                            Some(envelope::Payload::MetricsSnapshot(m)) => {
-                                tx.send(ConnectionState::Connected {
+                tokio::select! {
+                    result = timeout(heartbeat_timeout, read_frame(&mut read_half)) => {
+                        match result {
+                            Ok(Ok(envelope)) => {
+                                count += 1;
+                                match envelope.payload {
+                                    Some(envelope::Payload::MetricsSnapshot(m)) => {
+                                        tx.send(ConnectionState::Connected {
+                                            agent_version: agent_version.clone(),
+                                            uptime_seconds: m.uptime_seconds,
+                                        })
+                                        .ok();
+                                        store.update(m);
+                                    }
+                                    Some(envelope::Payload::Specs(s)) => {
+                                        store.update_specs(s);
+                                    }
+                                    Some(envelope::Payload::CommandResult(r)) => {
+                                        if let Some(result_tx) = pending.remove(&r.request_id) {
+                                            let _ = result_tx.send(r);
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                                println!("[Heartbeat] {count}");
+                            }
+                            _ => {
+                                println!("[Stale] agent: {agent_version}");
+                                store.clear();
+                                tx.send(ConnectionState::Stale {
                                     agent_version: agent_version.clone(),
-                                    uptime_seconds: m.uptime_seconds,
                                 })
                                 .ok();
-                                store.update(m);
+                                break;
                             }
-                            Some(envelope::Payload::Specs(s)) => {
-                                store.update_specs(s);
-                            }
-                            _ => {}
                         }
-                        println!("[Heartbeat] {count}");
                     }
-                    _ => {
-                        println!("[Stale] agent: {agent_version}");
-                        store.clear();
-                        tx.send(ConnectionState::Stale {
-                            agent_version: agent_version.clone(),
-                        })
-                        .ok();
-                        break;
+                    cmd = cmd_rx.recv() => {
+                        if let Some((command, result_tx)) = cmd {
+                            let request_id = command.request_id.clone();
+                            pending.insert(request_id, result_tx);
+                            let env = Envelope {
+                                version: 1,
+                                payload: Some(envelope::Payload::Command(command)),
+                            };
+                            if write_frame(&mut write_half, &env).await.is_err() {
+                                println!("[Stale] write failed: {agent_version}");
+                                store.clear();
+                                tx.send(ConnectionState::Stale {
+                                    agent_version: agent_version.clone(),
+                                })
+                                .ok();
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -106,14 +139,15 @@ mod tests {
     use crate::connection_state::ConnectionState;
     use crate::framing::write_frame;
     use crate::proto::sentinel::v1::{
-        CpuMetrics, Envelope, Heartbeat, Hello, MetricsSnapshot, Specs, envelope,
+        Command, CommandResult, CpuMetrics, Envelope, Heartbeat, Hello, MetricsSnapshot, Specs,
+        envelope,
     };
     use crate::state_store::StateStore;
     use std::sync::Arc;
     use std::time::Duration;
     use tokio::io::AsyncWriteExt;
     use tokio::net::TcpStream;
-    use tokio::sync::watch;
+    use tokio::sync::{mpsc, oneshot, watch};
 
     fn hello_envelope(version: &str) -> Envelope {
         Envelope {
@@ -130,8 +164,11 @@ mod tests {
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
         let (store, _store_rx) = StateStore::new();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))
@@ -157,8 +194,13 @@ mod tests {
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
         let (store, _store_rx) = StateStore::new();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(async move { server.run(tx, &store, Duration::from_millis(100)).await });
+        tokio::spawn(async move {
+            server
+                .run(tx, &store, Duration::from_millis(100), &mut cmd_rx)
+                .await
+        });
 
         let mut _stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut _stream, &hello_envelope("0.1.0"))
@@ -187,8 +229,11 @@ mod tests {
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
         let (store, _store_rx) = StateStore::new();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -219,8 +264,11 @@ mod tests {
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
         let (store, _store_rx) = StateStore::new();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -262,8 +310,11 @@ mod tests {
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
         let (store, _store_rx) = StateStore::new();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -302,8 +353,11 @@ mod tests {
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
         let (store, _store_rx) = StateStore::new();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -336,10 +390,11 @@ mod tests {
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
         let (store, mut store_rx) = StateStore::new();
         let store = Arc::new(store);
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
         tokio::spawn({
             let store = Arc::clone(&store);
-            async move { server.run(tx, &store, Duration::from_secs(5)).await }
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await }
         });
 
         {
@@ -386,8 +441,11 @@ mod tests {
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
         let (store, _store_rx) = StateStore::new();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))
@@ -431,8 +489,11 @@ mod tests {
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
         let (store, mut store_rx) = StateStore::new();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
         write_frame(&mut stream, &hello_envelope("0.1.0"))
@@ -472,10 +533,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let store = Arc::new(store);
         let mut specs_rx = store.subscribe_specs();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
         tokio::spawn({
             let store = Arc::clone(&store);
-            async move { server.run(tx, &store, Duration::from_secs(5)).await }
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await }
         });
 
         let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -516,10 +578,11 @@ mod tests {
         let (store, _store_rx) = StateStore::new();
         let store = Arc::new(store);
         let mut specs_rx = store.subscribe_specs();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
         tokio::spawn({
             let store = Arc::clone(&store);
-            async move { server.run(tx, &store, Duration::from_secs(5)).await }
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await }
         });
 
         {
@@ -563,8 +626,11 @@ mod tests {
         let port = server.local_port();
         let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
         let (store, mut store_rx) = StateStore::new();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
 
-        tokio::spawn(async move { server.run(tx, &store, Duration::from_secs(5)).await });
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
 
         {
             let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -598,5 +664,174 @@ mod tests {
             .expect("store was not cleared on disconnect")
             .unwrap();
         assert!(store_rx.borrow().is_none());
+    }
+
+    #[tokio::test]
+    async fn panel_sends_command_when_queued() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
+        let (cmd_tx, mut cmd_rx) = mpsc::channel(8);
+
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
+
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected")
+            .unwrap();
+
+        let (_result_tx, _result_rx) = oneshot::channel::<CommandResult>();
+        cmd_tx
+            .send((
+                Command {
+                    request_id: "req-1".into(),
+                    action_id: "launch_steam".into(),
+                },
+                _result_tx,
+            ))
+            .await
+            .unwrap();
+
+        let envelope = tokio::time::timeout(Duration::from_secs(2), read_frame(&mut stream))
+            .await
+            .expect("no Command frame received")
+            .unwrap();
+
+        match envelope.payload {
+            Some(envelope::Payload::Command(c)) => {
+                assert_eq!(c.request_id, "req-1");
+                assert_eq!(c.action_id, "launch_steam");
+            }
+            other => panic!("expected Command, got {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn command_result_success_resolves_pending_oneshot() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
+        let (cmd_tx, mut cmd_rx) = mpsc::channel(8);
+
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
+
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected")
+            .unwrap();
+
+        let (result_tx, result_rx) = oneshot::channel::<CommandResult>();
+        cmd_tx
+            .send((
+                Command {
+                    request_id: "req-2".into(),
+                    action_id: "launch_steam".into(),
+                },
+                result_tx,
+            ))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), read_frame(&mut stream))
+            .await
+            .expect("no Command frame received")
+            .unwrap();
+
+        write_frame(
+            &mut stream,
+            &Envelope {
+                version: 1,
+                payload: Some(envelope::Payload::CommandResult(CommandResult {
+                    request_id: "req-2".into(),
+                    success: true,
+                    ..Default::default()
+                })),
+            },
+        )
+        .await
+        .unwrap();
+
+        let result = tokio::time::timeout(Duration::from_secs(2), result_rx)
+            .await
+            .expect("oneshot did not resolve")
+            .unwrap();
+
+        assert!(result.success);
+        assert_eq!(result.request_id, "req-2");
+    }
+
+    #[tokio::test]
+    async fn command_result_error_resolves_pending_oneshot() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
+        let (cmd_tx, mut cmd_rx) = mpsc::channel(8);
+
+        tokio::spawn(
+            async move { server.run(tx, &store, Duration::from_secs(5), &mut cmd_rx).await },
+        );
+
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected")
+            .unwrap();
+
+        let (result_tx, result_rx) = oneshot::channel::<CommandResult>();
+        cmd_tx
+            .send((
+                Command {
+                    request_id: "req-3".into(),
+                    action_id: "launch_steam".into(),
+                },
+                result_tx,
+            ))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), read_frame(&mut stream))
+            .await
+            .expect("no Command frame received")
+            .unwrap();
+
+        write_frame(
+            &mut stream,
+            &Envelope {
+                version: 1,
+                payload: Some(envelope::Payload::CommandResult(CommandResult {
+                    request_id: "req-3".into(),
+                    success: false,
+                    error_message: "access denied".into(),
+                })),
+            },
+        )
+        .await
+        .unwrap();
+
+        let result = tokio::time::timeout(Duration::from_secs(2), result_rx)
+            .await
+            .expect("oneshot did not resolve")
+            .unwrap();
+
+        assert!(!result.success);
+        assert_eq!(result.error_message, "access denied");
     }
 }

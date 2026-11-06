@@ -16,7 +16,7 @@
 | Crate | Version | Used in | Why | License |
 |---|---|---|---|---|
 | `prost` | 0.13.5 | `sentinel-panel`, `fake-agent` | Protobuf runtime — serialization and deserialization of generated message types | Apache 2.0 |
-| `tokio` | 1.54.1 | `sentinel-panel`, `fake-agent` | Async runtime — TCP networking, async I/O traits used by the framing layer and LinkServer | MIT |
+| `tokio` | 1.54.1 | `sentinel-panel`, `fake-agent` | Async runtime — TCP networking, async I/O traits used by the framing layer and LinkServer; `sync` primitives (`mpsc`, `oneshot`, `watch`) used for the command pipeline and state propagation | MIT |
 | `prost-build` | 0.13.5 | `sentinel-panel` (build), `fake-agent` (build) | Compiles `sentinel.proto` into Rust structs at `cargo build` time. Requires system `protoc` | Apache 2.0 |
 | `slint` | 1.18.1 | `sentinel-panel` | UI framework for the panel's fullscreen dashboard | GPL v3 |
 | `slint-build` | 1.18.1 | `sentinel-panel` (build) | Compiles `.slint` UI files into Rust code at build time | GPL v3 |
