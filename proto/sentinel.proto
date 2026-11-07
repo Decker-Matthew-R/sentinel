@@ -14,7 +14,12 @@ message Envelope {
     Command command = 6;
     CommandResult command_result = 7;
     GameInfo game_info = 8;
+    GameLibrary game_library = 9;
   }
+}
+
+message GameLibrary {
+  repeated GameInfo games = 1;
 }
 
 message GameInfo {

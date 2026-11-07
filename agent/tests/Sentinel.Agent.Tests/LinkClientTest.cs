@@ -80,6 +80,40 @@ public class LinkClientTest
     }
 
     [Fact]
+    public async Task LinkClient_sends_GameLibrary_when_steam_library_provided()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        using var cts = new CancellationTokenSource();
+
+        var clientTask = Task.Run(() =>
+        {
+            var client = new LinkClient("127.0.0.1", port, new SensorPoller(new FakeSensorSource()), new FakeSpecsSource(), new FakeActionRunner(), new FakeSteamLibrary());
+            return client.RunAsync(cts.Token);
+        });
+
+        using var server = await listener.AcceptTcpClientAsync();
+        var stream = server.GetStream();
+
+        await FrameReader.ReadAsync(stream); // Hello
+        await FrameReader.ReadAsync(stream); // Specs
+        await FrameReader.ReadAsync(stream); // GameInfo
+
+        var libraryEnvelope = await FrameReader.ReadAsync(stream);
+        Assert.Equal(Envelope.PayloadOneofCase.GameLibrary, libraryEnvelope.PayloadCase);
+        Assert.Equal(3, libraryEnvelope.GameLibrary.Games.Count);
+        Assert.Contains(libraryEnvelope.GameLibrary.Games, g => g.AppId == "570" && g.Name == "Dota 2");
+        Assert.Contains(libraryEnvelope.GameLibrary.Games, g => g.AppId == "730" && g.Name == "Counter-Strike 2");
+
+        await cts.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => clientTask);
+
+        listener.Stop();
+    }
+
+    [Fact]
     public async Task LinkClient_responds_to_Command_with_CommandResult()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);

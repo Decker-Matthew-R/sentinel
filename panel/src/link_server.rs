@@ -78,6 +78,9 @@ impl LinkServer {
                                     Some(envelope::Payload::GameInfo(g)) => {
                                         store.update_game_info(g);
                                     }
+                                    Some(envelope::Payload::GameLibrary(gl)) => {
+                                        store.update_game_library(gl.games);
+                                    }
                                     Some(envelope::Payload::CommandResult(r)) => {
                                         if let Some(result_tx) = pending.remove(&r.request_id) {
                                             let _ = result_tx.send(r);
@@ -142,8 +145,8 @@ mod tests {
     use crate::connection_state::ConnectionState;
     use crate::framing::write_frame;
     use crate::proto::sentinel::v1::{
-        Command, CommandResult, CpuMetrics, Envelope, GameInfo, Heartbeat, Hello, MetricsSnapshot,
-        Specs, envelope,
+        Command, CommandResult, CpuMetrics, Envelope, GameInfo, GameLibrary, Heartbeat, Hello,
+        MetricsSnapshot, Specs, envelope,
     };
     use crate::state_store::StateStore;
     use std::sync::Arc;
@@ -858,6 +861,68 @@ mod tests {
             .unwrap();
         assert_eq!(game_info_rx.borrow().as_ref().unwrap().app_id, "570");
         assert_eq!(game_info_rx.borrow().as_ref().unwrap().name, "Dota 2");
+    }
+
+    #[tokio::test]
+    async fn game_library_message_is_stored_in_state_store() {
+        let server = LinkServer::bind(0).await.unwrap();
+        let port = server.local_port();
+        let (tx, mut rx) = watch::channel(ConnectionState::Waiting);
+        let (store, _store_rx) = StateStore::new();
+        let store = Arc::new(store);
+        let mut game_library_rx = store.subscribe_game_library();
+        let (_cmd_tx, mut cmd_rx) = mpsc::channel(1);
+
+        tokio::spawn({
+            let store = Arc::clone(&store);
+            async move {
+                server
+                    .run(tx, &store, Duration::from_secs(5), &mut cmd_rx)
+                    .await
+            }
+        });
+
+        let mut stream = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
+        write_frame(&mut stream, &hello_envelope("0.1.0"))
+            .await
+            .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), rx.changed())
+            .await
+            .expect("state did not transition to Connected")
+            .unwrap();
+
+        write_frame(
+            &mut stream,
+            &Envelope {
+                version: 1,
+                payload: Some(envelope::Payload::GameLibrary(GameLibrary {
+                    games: vec![
+                        GameInfo {
+                            app_id: "570".into(),
+                            name: "Dota 2".into(),
+                            cover_art: vec![],
+                        },
+                        GameInfo {
+                            app_id: "730".into(),
+                            name: "CS2".into(),
+                            cover_art: vec![],
+                        },
+                    ],
+                })),
+            },
+        )
+        .await
+        .unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), game_library_rx.changed())
+            .await
+            .expect("game library was not stored in state store")
+            .unwrap();
+        let lib = game_library_rx.borrow();
+        assert_eq!(lib.len(), 2);
+        assert_eq!(lib[0].app_id, "570");
+        assert_eq!(lib[1].name, "CS2");
     }
 
     #[tokio::test]

@@ -97,6 +97,9 @@ pub struct StateStore {
     game_info_tx: watch::Sender<Option<GameInfo>>,
     #[allow(dead_code)]
     game_info_rx: watch::Receiver<Option<GameInfo>>,
+    game_library_tx: watch::Sender<Vec<GameInfo>>,
+    #[allow(dead_code)]
+    game_library_rx: watch::Receiver<Vec<GameInfo>>,
     histories: Mutex<MetricHistories>,
 }
 
@@ -105,12 +108,15 @@ impl StateStore {
         let (tx, rx) = watch::channel(None);
         let (specs_tx, specs_rx) = watch::channel(None);
         let (game_info_tx, game_info_rx) = watch::channel(None);
+        let (game_library_tx, game_library_rx) = watch::channel(vec![]);
         let store = Self {
             tx,
             specs_tx,
             specs_rx,
             game_info_tx,
             game_info_rx,
+            game_library_tx,
+            game_library_rx,
             histories: Mutex::new(MetricHistories::new(HISTORY_CAPACITY)),
         };
         (store, rx)
@@ -132,6 +138,14 @@ impl StateStore {
         self.game_info_tx.subscribe()
     }
 
+    pub fn update_game_library(&self, games: Vec<GameInfo>) {
+        self.game_library_tx.send(games).ok();
+    }
+
+    pub fn subscribe_game_library(&self) -> watch::Receiver<Vec<GameInfo>> {
+        self.game_library_tx.subscribe()
+    }
+
     pub fn update(&self, snapshot: MetricsSnapshot) {
         self.histories.lock().unwrap().push(&snapshot);
         self.tx.send(Some(snapshot)).ok();
@@ -142,6 +156,7 @@ impl StateStore {
         self.tx.send(None).ok();
         self.specs_tx.send(None).ok();
         self.game_info_tx.send(None).ok();
+        self.game_library_tx.send(vec![]).ok();
     }
 
     #[allow(dead_code)]
@@ -351,6 +366,45 @@ mod tests {
         let rx = store.subscribe_game_info();
         assert_eq!(rx.borrow().as_ref().unwrap().app_id, "570");
         assert_eq!(rx.borrow().as_ref().unwrap().name, "Dota 2");
+    }
+
+    #[test]
+    fn game_library_starts_empty() {
+        let (store, _rx) = StateStore::new();
+        assert!(store.subscribe_game_library().borrow().is_empty());
+    }
+
+    #[test]
+    fn update_game_library_stores_games() {
+        let (store, _rx) = StateStore::new();
+        store.update_game_library(vec![
+            GameInfo {
+                app_id: "570".into(),
+                name: "Dota 2".into(),
+                cover_art: vec![],
+            },
+            GameInfo {
+                app_id: "730".into(),
+                name: "CS2".into(),
+                cover_art: vec![],
+            },
+        ]);
+        let rx = store.subscribe_game_library();
+        assert_eq!(rx.borrow().len(), 2);
+        assert_eq!(rx.borrow()[0].app_id, "570");
+        assert_eq!(rx.borrow()[1].name, "CS2");
+    }
+
+    #[test]
+    fn clear_also_clears_game_library() {
+        let (store, _rx) = StateStore::new();
+        store.update_game_library(vec![GameInfo {
+            app_id: "570".into(),
+            name: "Dota 2".into(),
+            cover_art: vec![],
+        }]);
+        store.clear();
+        assert!(store.subscribe_game_library().borrow().is_empty());
     }
 
     #[test]

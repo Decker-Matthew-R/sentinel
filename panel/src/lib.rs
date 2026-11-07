@@ -207,6 +207,7 @@ pub fn run() {
             let app_weak2 = app.as_weak();
             let app_weak3 = app.as_weak();
             let app_weak4 = app.as_weak();
+            let app_weak5 = app.as_weak();
 
             tokio::spawn(async move {
                 let mut rx = rx;
@@ -505,6 +506,40 @@ pub fn run() {
                                         app.set_has_game_cover_art(false);
                                     }
                                 }
+                            }
+                        });
+                    }
+                }
+            });
+
+            tokio::spawn({
+                let store = Arc::clone(&store);
+                async move {
+                    let mut game_library_rx = store.subscribe_game_library();
+                    loop {
+                        if game_library_rx.changed().await.is_err() {
+                            break;
+                        }
+                        let games = game_library_rx.borrow().clone();
+                        let handle = app_weak5.clone();
+                        let _ = slint::invoke_from_event_loop(move || {
+                            if let Some(app) = handle.upgrade() {
+                                let cards: Vec<GameCardData> = games
+                                    .iter()
+                                    .map(|g| {
+                                        let img_opt = decode_cover_art(&g.cover_art);
+                                        let has_art = img_opt.is_some();
+                                        GameCardData {
+                                            app_id: g.app_id.clone().into(),
+                                            name: g.name.clone().into(),
+                                            cover_art: img_opt.unwrap_or_default(),
+                                            has_cover_art: has_art,
+                                        }
+                                    })
+                                    .collect();
+                                app.set_game_library(slint::ModelRc::new(slint::VecModel::from(
+                                    cards,
+                                )));
                             }
                         });
                     }

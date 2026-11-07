@@ -54,6 +54,24 @@ public class LinkClient(string host, int port, SensorPoller poller, ISpecsSource
             });
         }
 
+        if (steamLibrary is not null)
+        {
+            var library = new GameLibrary();
+            foreach (var g in steamLibrary.GetInstalledGames())
+            {
+                library.Games.Add(new Sentinel.V1.GameInfo
+                {
+                    AppId = g.AppId,
+                    Name = g.Name,
+                    CoverArt = Google.Protobuf.ByteString.CopyFrom(g.CoverArt)
+                });
+            }
+            if (library.Games.Count > 0)
+            {
+                await SendAsync(stream, new Envelope { Version = 1, GameLibrary = library });
+            }
+        }
+
         _ = ReadCommandsAsync(stream, cancellationToken);
 
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));

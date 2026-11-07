@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net.NetworkInformation;
 using LibreHardwareMonitor.Hardware;
 using Sentinel.Agent;
@@ -46,6 +47,10 @@ if (OperatingSystem.IsWindows())
             actions["launch_last_game"] = [$"steam://rungameid/{game.AppId}"];
             Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Last played game: {game.Name} ({game.AppId})");
         }
+        var installed = steamLibrary.GetInstalledGames().ToList();
+        foreach (var g in installed)
+            actions[$"launch_game_{g.AppId}"] = [$"steam://rungameid/{g.AppId}"];
+        Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Registered {installed.Count} installed games");
     }
 }
 

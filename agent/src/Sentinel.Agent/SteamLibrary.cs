@@ -26,6 +26,27 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
         catch { return []; }
     }
 
+    public IEnumerable<GameInfo> GetInstalledGames()
+    {
+        var steamappsPath = Path.Combine(steamPath, "steamapps");
+        if (!Directory.Exists(steamappsPath)) return [];
+        var result = new List<GameInfo>();
+        foreach (var manifest in Directory.GetFiles(steamappsPath, "appmanifest_*.acf"))
+        {
+            try
+            {
+                var text = File.ReadAllText(manifest);
+                var name = ParseNameFromManifest(text);
+                if (name is null) continue;
+                var appId = Path.GetFileNameWithoutExtension(manifest)["appmanifest_".Length..];
+                var coverArt = LoadCoverArt(appId);
+                result.Add(new GameInfo(appId, name, coverArt));
+            }
+            catch { }
+        }
+        return result;
+    }
+
     private string? FindLastPlayedAppId()
     {
         var userdataPath = Path.Combine(steamPath, "userdata");
