@@ -1,6 +1,6 @@
 # Roadmap — Sentinel
 
-> Status: **In progress** — M0, M2, and M3 substantially complete (hardware-blocked items excluded). M4 functionally complete — #56–60 done, #61 hardware blocked. M5 in progress — #62, #96, #63, #64, and #123 done; #65 and #66 hardware blocked. M1 in progress — #99, #100, #101, #102, #103, and #105 done; #122 remaining. Continuous tasks: #112 done. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
+> Status: **In progress** — M0, M2, and M3 substantially complete (#49–54 done, #55 hardware blocked). M4 functionally complete — #56–60 done, #61 hardware blocked. M5 in progress — #62, #96, #63, #64, and #123 done; #65 and #66 hardware blocked. M1 in progress — #99, #100, #101, #102, #103, and #105 done; #122 remaining. Continuous tasks: #112 done. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
 
 ## Goals of the project
 
@@ -104,7 +104,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] #51 — Panel: `StateStore` maintains ring-buffer history per metric
 - [x] #52 — Agent: `SensorPoller` polls `ISensorSource` and streams `MetricsSnapshot`
 - [x] #53 — Agent: send `Specs` message once per connection
-- [ ] #54 — Agent: integrate LibreHardwareMonitorLib as the real sensor source *(hardware blocked)*
+- [x] #54 — Agent: integrate LibreHardwareMonitorLib as the real sensor source ✓
 - [ ] #55 — Configure Task Scheduler to start the agent elevated at logon *(hardware blocked)*
 
 **Outcomes:** Every metric visible (even if plainly rendered) and accurate compared with Task Manager / HWiNFO.

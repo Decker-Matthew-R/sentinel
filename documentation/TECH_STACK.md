@@ -91,7 +91,7 @@ To upgrade: update the version in the config file, run a local build to verify, 
 | Pros | Cons |
 |---|---|
 | PC exposes no listening port (smaller attack surface) | Reconnect logic lives in the agent, which must handle the tablet rebooting |
-| Tablet address on the USB link is fixed — no discovery needed | Slightly less conventional than "PC is the server" |
+| Tablet is always the RNDIS gateway — agent discovers it dynamically, no hardcoded IP | Slightly less conventional than "PC is the server" |
 
 ### 4. Protocol: length-prefixed Protobuf over TCP
 

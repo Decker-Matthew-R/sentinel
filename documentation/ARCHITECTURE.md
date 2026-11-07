@@ -106,7 +106,7 @@ Threading: the Slint event loop owns the main thread; a tokio runtime handles ne
 ## 4. Link and connection model
 
 - The tablet uses **Android USB tethering** (RNDIS), which makes Windows see it as a standard network adapter.
-- Android assigns the tablet a fixed address on the USB link (`10.186.188.235`) and serves DHCP to the PC.
+- Android assigns the tablet the gateway address on the RNDIS subnet and serves DHCP to the PC. The subnet can vary between sessions; the agent discovers the tablet dynamically by reading the gateway address of any RNDIS adapter.
 - **The tablet listens; the agent dials out.** The PC never opens a listening port, and the agent always knows where the tablet is.
 - The same cable supplies power from the PC's USB-C port (typically 5 V at 1.5–3 A).
 

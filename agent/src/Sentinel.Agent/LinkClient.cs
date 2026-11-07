@@ -27,8 +27,14 @@ public class LinkClient(string host, int port, SensorPoller poller, ISpecsSource
             Specs = new Specs
             {
                 CpuName = specs.CpuName,
+                CpuCoreCount = specs.CpuCoreCount,
+                CpuThreadCount = specs.CpuThreadCount,
+                CpuBoostClockMhz = specs.CpuBoostClockMhz,
                 GpuName = specs.GpuName,
+                GpuVramTotalMb = specs.GpuVramTotalMb,
                 RamTotalMb = specs.RamTotalMb,
+                RamSpeedMhz = specs.RamSpeedMhz,
+                RamName = specs.RamName,
                 OsVersion = specs.OsVersion
             }
         });

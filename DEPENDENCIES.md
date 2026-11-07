@@ -5,6 +5,7 @@
 | Package | Version | Used in | Why | License |
 |---|---|---|---|---|
 | `Google.Protobuf` | 3.36.2 | `Sentinel.Agent` | Protobuf runtime — serialization and deserialization of generated message types | BSD 3-Clause |
+| `LibreHardwareMonitorLib` | 0.9.6 | `Sentinel.Agent` | Reads hardware sensors (CPU/GPU utilization and temperature, VRAM, RAM) and hardware names for the specs message. Requires elevated privileges for CPU temperature sensors | MPL 2.0 |
 | `Grpc.Tools` | 2.85.0 | `Sentinel.Agent` | Build-time code generator; compiles `sentinel.proto` into C# classes at `dotnet build` time. Bundles its own `protoc` — no system install needed | Apache 2.0 |
 | `xunit` | 2.9.2 | `Sentinel.Agent.Tests` | Test framework | Apache 2.0 |
 | `xunit.runner.visualstudio` | 2.8.2 | `Sentinel.Agent.Tests` | Allows `dotnet test` to discover and run xUnit tests | MIT |
