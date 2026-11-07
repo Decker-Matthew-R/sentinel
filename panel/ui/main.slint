@@ -332,17 +332,10 @@ export component AppWindow inherits Window {
                         enabled: !root.action-pending;
                         clicked => { root.action-pressed("launch_game_" + card.app-id); }
                     }
-                    if card.has-cover-art : Image {
-                        source: card.cover-art;
-                        width: parent.width;
-                        height: parent.height;
-                        image-fit: cover;
-                    }
                     Rectangle {
                         y: parent.height - self.height;
                         width: parent.width;
                         height: 36px;
-                        visible: !card.has-cover-art;
                         background: @linear-gradient(180deg, transparent, #000000cc);
                         Text {
                             text: card.name;
@@ -354,6 +347,12 @@ export component AppWindow inherits Window {
                             height: parent.height;
                             vertical-alignment: center;
                         }
+                    }
+                    if card.has-cover-art : Image {
+                        source: card.cover-art;
+                        width: parent.width;
+                        height: parent.height;
+                        image-fit: cover;
                     }
                 }
             }
@@ -370,17 +369,10 @@ export component AppWindow inherits Window {
                     enabled: !root.action-pending;
                     clicked => { root.action-pressed("launch_last_game"); }
                 }
-                if root.has-game-cover-art : Image {
-                    source: root.game-cover-art;
-                    width: parent.width;
-                    height: parent.height;
-                    image-fit: cover;
-                }
                 Rectangle {
                     y: parent.height - self.height;
                     width: parent.width;
                     height: 36px;
-                    visible: !root.has-game-cover-art;
                     background: @linear-gradient(180deg, transparent, #000000cc);
                     Text {
                         text: root.game-name;
@@ -392,6 +384,12 @@ export component AppWindow inherits Window {
                         height: parent.height;
                         vertical-alignment: center;
                     }
+                }
+                if root.has-game-cover-art : Image {
+                    source: root.game-cover-art;
+                    width: parent.width;
+                    height: parent.height;
+                    image-fit: cover;
                 }
             }
 
