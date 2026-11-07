@@ -338,7 +338,7 @@ export component AppWindow inherits Window {
                         height: parent.height;
                         image-fit: cover;
                     }
-                    Rectangle {
+                    if !card.has-cover-art : Rectangle {
                         y: parent.height - self.height;
                         width: parent.width;
                         height: 36px;
@@ -375,7 +375,7 @@ export component AppWindow inherits Window {
                     height: parent.height;
                     image-fit: cover;
                 }
-                Rectangle {
+                if !root.has-game-cover-art : Rectangle {
                     y: parent.height - self.height;
                     width: parent.width;
                     height: 36px;

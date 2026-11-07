@@ -129,6 +129,7 @@ public class SteamLibraryTest
                 {
                     "appid" "934700"
                     "name" "Dead Island 2"
+                    "type" "game"
                 }
                 """);
 
@@ -161,6 +162,7 @@ public class SteamLibraryTest
                 {
                     "appid" "552520"
                     "name" "Far Cry 5"
+                    "type" "game"
                 }
                 """);
 
@@ -224,6 +226,74 @@ public class SteamLibraryTest
                     "appid" "228980"
                     "name" "Steamworks Common Redistributables"
                     "type" "Tool"
+                }
+                """);
+
+            var games = new SteamLibrary(steamPath).GetInstalledGames().ToList();
+
+            Assert.Single(games);
+            Assert.Equal("Dota 2", games[0].Name);
+        }
+        finally
+        {
+            Directory.Delete(steamPath, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void LoadCoverArt_falls_back_to_library_capsule_when_library_600x900_absent()
+    {
+        var steamPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            var hashDir = Path.Combine(steamPath, "appcache", "librarycache", "552520", "abc123");
+            Directory.CreateDirectory(hashDir);
+            var imageBytes = new byte[] { 0xFF, 0xD8, 0xFF };
+            File.WriteAllBytes(Path.Combine(hashDir, "library_capsule.jpg"), imageBytes);
+
+            var steamappsDir = Path.Combine(steamPath, "steamapps");
+            Directory.CreateDirectory(steamappsDir);
+            File.WriteAllText(Path.Combine(steamappsDir, "appmanifest_552520.acf"), """
+                "AppState"
+                {
+                    "appid" "552520"
+                    "name" "Far Cry 5"
+                    "type" "game"
+                }
+                """);
+
+            var games = new SteamLibrary(steamPath).GetInstalledGames().ToList();
+
+            Assert.Single(games);
+            Assert.Equal(imageBytes, games[0].CoverArt);
+        }
+        finally
+        {
+            Directory.Delete(steamPath, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void GetInstalledGames_excludes_entries_without_type_field()
+    {
+        var steamPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            var steamappsDir = Path.Combine(steamPath, "steamapps");
+            Directory.CreateDirectory(steamappsDir);
+            File.WriteAllText(Path.Combine(steamappsDir, "appmanifest_570.acf"), """
+                "AppState"
+                {
+                    "appid" "570"
+                    "name" "Dota 2"
+                    "type" "game"
+                }
+                """);
+            File.WriteAllText(Path.Combine(steamappsDir, "appmanifest_228980.acf"), """
+                "AppState"
+                {
+                    "appid" "228980"
+                    "name" "Steamworks Common Redistributables"
                 }
                 """);
 

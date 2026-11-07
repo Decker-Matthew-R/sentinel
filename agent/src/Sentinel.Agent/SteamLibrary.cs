@@ -21,7 +21,7 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
             var name = ParseNameFromManifest(text);
             if (name is null) return null;
             var type = ParseTypeFromManifest(text);
-            if (type is not null && !string.Equals(type, "game", StringComparison.OrdinalIgnoreCase)) return null;
+            if (!string.Equals(type, "game", StringComparison.OrdinalIgnoreCase)) return null;
             return new GameInfo(appId, name, LoadCoverArt(appId));
         }
         catch { return null; }
@@ -34,6 +34,8 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
         try
         {
             var files = Directory.GetFiles(dir, "library_600x900.jpg", SearchOption.AllDirectories);
+            if (files.Length == 0)
+                files = Directory.GetFiles(dir, "library_capsule.jpg", SearchOption.AllDirectories);
             return files.Length > 0 ? File.ReadAllBytes(files[0]) : [];
         }
         catch { return []; }
@@ -52,7 +54,7 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
                 var name = ParseNameFromManifest(text);
                 if (name is null) continue;
                 var type = ParseTypeFromManifest(text);
-                if (type is not null && !string.Equals(type, "game", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!string.Equals(type, "game", StringComparison.OrdinalIgnoreCase)) continue;
                 var appId = Path.GetFileNameWithoutExtension(manifest)["appmanifest_".Length..];
                 var coverArt = LoadCoverArt(appId);
                 result.Add(new GameInfo(appId, name, coverArt));
