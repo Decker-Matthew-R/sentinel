@@ -25,6 +25,10 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
         if (!Directory.Exists(dir)) return [];
         try
         {
+            var flatPath = Path.Combine(dir, "library_600x900.jpg");
+            if (File.Exists(flatPath))
+                return File.ReadAllBytes(flatPath);
+
             var files = Directory.GetFiles(dir, "library_capsule.jpg", SearchOption.AllDirectories);
             return files.Length > 0 ? File.ReadAllBytes(files[0]) : [];
         }
