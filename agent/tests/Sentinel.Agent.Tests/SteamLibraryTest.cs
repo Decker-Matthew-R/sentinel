@@ -144,7 +144,7 @@ public class SteamLibraryTest
     }
 
     [Fact]
-    public void LoadCoverArt_returns_bytes_when_library_capsule_in_hash_subdir_exists()
+    public void LoadCoverArt_returns_bytes_when_library_600x900_in_hash_subdir_exists()
     {
         var steamPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         try
@@ -152,7 +152,7 @@ public class SteamLibraryTest
             var hashDir = Path.Combine(steamPath, "appcache", "librarycache", "552520", "abc123");
             Directory.CreateDirectory(hashDir);
             var imageBytes = new byte[] { 0xFF, 0xD8, 0xFF };
-            File.WriteAllBytes(Path.Combine(hashDir, "library_capsule.jpg"), imageBytes);
+            File.WriteAllBytes(Path.Combine(hashDir, "library_600x900.jpg"), imageBytes);
 
             var steamappsDir = Path.Combine(steamPath, "steamapps");
             Directory.CreateDirectory(steamappsDir);
@@ -168,6 +168,69 @@ public class SteamLibraryTest
 
             Assert.Single(games);
             Assert.Equal(imageBytes, games[0].CoverArt);
+        }
+        finally
+        {
+            Directory.Delete(steamPath, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ParseTypeFromManifest_returns_type_from_appmanifest()
+    {
+        var vdf = """
+            "AppState"
+            {
+                "appid" "228980"
+                "name" "Steamworks Common Redistributables"
+                "type" "Tool"
+            }
+            """;
+        Assert.Equal("Tool", SteamLibrary.ParseTypeFromManifest(vdf));
+    }
+
+    [Fact]
+    public void ParseTypeFromManifest_returns_null_when_type_key_missing()
+    {
+        var vdf = """
+            "AppState"
+            {
+                "appid" "570"
+                "name" "Dota 2"
+            }
+            """;
+        Assert.Null(SteamLibrary.ParseTypeFromManifest(vdf));
+    }
+
+    [Fact]
+    public void GetInstalledGames_excludes_tool_type_entries()
+    {
+        var steamPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            var steamappsDir = Path.Combine(steamPath, "steamapps");
+            Directory.CreateDirectory(steamappsDir);
+            File.WriteAllText(Path.Combine(steamappsDir, "appmanifest_570.acf"), """
+                "AppState"
+                {
+                    "appid" "570"
+                    "name" "Dota 2"
+                    "type" "Game"
+                }
+                """);
+            File.WriteAllText(Path.Combine(steamappsDir, "appmanifest_228980.acf"), """
+                "AppState"
+                {
+                    "appid" "228980"
+                    "name" "Steamworks Common Redistributables"
+                    "type" "Tool"
+                }
+                """);
+
+            var games = new SteamLibrary(steamPath).GetInstalledGames().ToList();
+
+            Assert.Single(games);
+            Assert.Equal("Dota 2", games[0].Name);
         }
         finally
         {
