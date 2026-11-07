@@ -21,8 +21,13 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
 
     private byte[] LoadCoverArt(string appId)
     {
-        var path = Path.Combine(steamPath, "appcache", "librarycache", $"{appId}_library_600x900.jpg");
-        try { return File.Exists(path) ? File.ReadAllBytes(path) : []; }
+        var dir = Path.Combine(steamPath, "appcache", "librarycache", appId);
+        if (!Directory.Exists(dir)) return [];
+        try
+        {
+            var files = Directory.GetFiles(dir, "library_capsule.jpg", SearchOption.AllDirectories);
+            return files.Length > 0 ? File.ReadAllBytes(files[0]) : [];
+        }
         catch { return []; }
     }
 
