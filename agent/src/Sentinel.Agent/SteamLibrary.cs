@@ -14,7 +14,16 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
         var appId = FindLastPlayedAppId();
         if (appId is null) return null;
         var name = FindAppName(appId);
-        return name is null ? null : new GameInfo(appId, name);
+        if (name is null) return null;
+        var coverArt = LoadCoverArt(appId);
+        return new GameInfo(appId, name, coverArt);
+    }
+
+    private byte[] LoadCoverArt(string appId)
+    {
+        var path = Path.Combine(steamPath, "appcache", "librarycache", $"{appId}_library_600x900.jpg");
+        try { return File.Exists(path) ? File.ReadAllBytes(path) : []; }
+        catch { return []; }
     }
 
     private string? FindLastPlayedAppId()

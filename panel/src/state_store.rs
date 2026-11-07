@@ -1,4 +1,4 @@
-use crate::proto::sentinel::v1::{MetricsSnapshot, Specs};
+use crate::proto::sentinel::v1::{GameInfo, MetricsSnapshot, Specs};
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use tokio::sync::watch;
@@ -94,6 +94,9 @@ pub struct StateStore {
     specs_tx: watch::Sender<Option<Specs>>,
     #[allow(dead_code)]
     specs_rx: watch::Receiver<Option<Specs>>,
+    game_info_tx: watch::Sender<Option<GameInfo>>,
+    #[allow(dead_code)]
+    game_info_rx: watch::Receiver<Option<GameInfo>>,
     histories: Mutex<MetricHistories>,
 }
 
@@ -101,10 +104,13 @@ impl StateStore {
     pub fn new() -> (Self, watch::Receiver<Option<MetricsSnapshot>>) {
         let (tx, rx) = watch::channel(None);
         let (specs_tx, specs_rx) = watch::channel(None);
+        let (game_info_tx, game_info_rx) = watch::channel(None);
         let store = Self {
             tx,
             specs_tx,
             specs_rx,
+            game_info_tx,
+            game_info_rx,
             histories: Mutex::new(MetricHistories::new(HISTORY_CAPACITY)),
         };
         (store, rx)
@@ -118,6 +124,14 @@ impl StateStore {
         self.specs_tx.subscribe()
     }
 
+    pub fn update_game_info(&self, game_info: GameInfo) {
+        self.game_info_tx.send(Some(game_info)).ok();
+    }
+
+    pub fn subscribe_game_info(&self) -> watch::Receiver<Option<GameInfo>> {
+        self.game_info_tx.subscribe()
+    }
+
     pub fn update(&self, snapshot: MetricsSnapshot) {
         self.histories.lock().unwrap().push(&snapshot);
         self.tx.send(Some(snapshot)).ok();
@@ -127,6 +141,7 @@ impl StateStore {
         self.histories.lock().unwrap().clear();
         self.tx.send(None).ok();
         self.specs_tx.send(None).ok();
+        self.game_info_tx.send(None).ok();
     }
 
     #[allow(dead_code)]
@@ -317,5 +332,36 @@ mod tests {
         });
         store.clear();
         assert!(store.subscribe_specs().borrow().is_none());
+    }
+
+    #[test]
+    fn game_info_starts_as_none() {
+        let (store, _rx) = StateStore::new();
+        assert!(store.subscribe_game_info().borrow().is_none());
+    }
+
+    #[test]
+    fn update_game_info_stores_game_info() {
+        let (store, _rx) = StateStore::new();
+        store.update_game_info(GameInfo {
+            app_id: "570".into(),
+            name: "Dota 2".into(),
+            cover_art: vec![],
+        });
+        let rx = store.subscribe_game_info();
+        assert_eq!(rx.borrow().as_ref().unwrap().app_id, "570");
+        assert_eq!(rx.borrow().as_ref().unwrap().name, "Dota 2");
+    }
+
+    #[test]
+    fn clear_also_clears_game_info() {
+        let (store, _rx) = StateStore::new();
+        store.update_game_info(GameInfo {
+            app_id: "570".into(),
+            name: "Dota 2".into(),
+            cover_art: vec![],
+        });
+        store.clear();
+        assert!(store.subscribe_game_info().borrow().is_none());
     }
 }

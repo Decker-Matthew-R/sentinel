@@ -84,7 +84,7 @@ flowchart LR
 | `SensorPoller` | Polls `ISensorSource` roughly once per second and produces `MetricsSnapshot` |
 | `ISpecsSource` | Interface over static hardware info; `FakeSpecsSource` is the always-available dev/test implementation; `WindowsSpecsSource` is the real one (M3 #54) |
 | `VdfParser` | Parses VDF/KeyValues text into a `VdfNode` tree (`VdfString` / `VdfMap`); used by `SteamLibrary` to read `.acf` and `.vdf` files |
-| `SteamLibrary` | Finds Steam install and library folders, parses `localconfig.vdf` (last played) and `appmanifest_*.acf` (names), loads cached cover art |
+| `ISteamLibrary` | Interface over Steam library access; `FakeSteamLibrary` is the dev/test implementation; `SteamLibrary` is the real one (M5 #65) — reads the registry for install path, `localconfig.vdf` for last played, and `appmanifest_*.acf` for names; cover art loading is #66 |
 | `ActionRunner` | Maps an **action ID** to a predefined command. Never executes arbitrary input |
 | `LinkClient` | Connects to the tablet, performs the handshake, streams data, retries with backoff |
 | Tray icon | Status (connected / disconnected), quit, open logs |
@@ -138,7 +138,7 @@ Both timeout and disconnect transition to `Stale` rather than back to `Waiting` 
 | `MetricsSnapshot` | Agent → Tablet | ~1 Hz: utilization, temps, clocks, power, memory, uptime | Defined in v1 (uptime + nested `CpuMetrics`, `GpuMetrics`, `RamMetrics` — fields expand in M3) |
 | `Capabilities` | Agent → Tablet | After handshake: features and action list the agent supports | Planned (M5) |
 | `Specs` | Agent → Tablet | Once per connection: CPU model/cores/threads/boost clock, GPU model/VRAM, RAM name/total/speed, OS version | Defined in v1 |
-| `GameInfo` | Agent → Tablet | On connect and when it changes: app ID, name, cover art bytes | Planned (M5) |
+| `GameInfo` | Agent → Tablet | On connect and when it changes: app ID, name, cover art bytes | Defined in v1 |
 | `Command` | Tablet → Agent | Button press: request ID + action ID | Defined in v1 |
 | `CommandResult` | Agent → Tablet | Success or error for a request ID | Defined in v1 |
 

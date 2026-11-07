@@ -7,6 +7,7 @@ mod view_models;
 
 use crate::proto::sentinel::v1::{Command, CommandResult, MetricsSnapshot};
 use connection_state::ConnectionState;
+use image::ImageFormat;
 use link_server::LinkServer;
 use state_store::StateStore;
 use std::sync::Arc;
@@ -147,6 +148,19 @@ fn format_uptime(seconds: u64) -> String {
     }
 }
 
+fn decode_cover_art(jpeg_bytes: &[u8]) -> Option<slint::Image> {
+    if jpeg_bytes.is_empty() {
+        return None;
+    }
+    let img = image::load_from_memory_with_format(jpeg_bytes, ImageFormat::Jpeg)
+        .ok()?
+        .into_rgb8();
+    let (w, h) = img.dimensions();
+    let mut buffer = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(w, h);
+    buffer.make_mut_bytes().copy_from_slice(img.as_raw());
+    Some(slint::Image::from_rgb8(buffer))
+}
+
 fn to_slint_props(state: &ConnectionState) -> (ConnectionStatus, String, String) {
     match state {
         ConnectionState::Waiting => (ConnectionStatus::Waiting, String::new(), String::new()),
@@ -192,6 +206,7 @@ pub fn run() {
             let app_weak = app.as_weak();
             let app_weak2 = app.as_weak();
             let app_weak3 = app.as_weak();
+            let app_weak4 = app.as_weak();
 
             tokio::spawn(async move {
                 let mut rx = rx;
@@ -457,6 +472,37 @@ pub fn run() {
                                         app.set_ram_speed("".into());
                                         app.set_os_version("".into());
                                         app.set_show_specs(false);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            tokio::spawn({
+                let store = Arc::clone(&store);
+                async move {
+                    let mut game_info_rx = store.subscribe_game_info();
+                    loop {
+                        if game_info_rx.changed().await.is_err() {
+                            break;
+                        }
+                        let game_info = game_info_rx.borrow().clone();
+                        let handle = app_weak4.clone();
+                        let _ = slint::invoke_from_event_loop(move || {
+                            if let Some(app) = handle.upgrade() {
+                                match game_info {
+                                    Some(g) => {
+                                        app.set_game_name(g.name.into());
+                                        if let Some(img) = decode_cover_art(&g.cover_art) {
+                                            app.set_has_game_cover_art(true);
+                                            app.set_game_cover_art(img);
+                                        }
+                                    }
+                                    None => {
+                                        app.set_game_name("".into());
+                                        app.set_has_game_cover_art(false);
                                     }
                                 }
                             }

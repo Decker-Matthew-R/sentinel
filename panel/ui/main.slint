@@ -63,6 +63,9 @@ export component AppWindow inherits Window {
     in property <string> ram-total: "";
     in property <string> ram-speed: "";
     in property <string> os-version: "";
+    in property <string> game-name: "";
+    in property <image> game-cover-art;
+    in property <bool> has-game-cover-art: false;
     in-out property <bool> show-specs: false;
     in-out property <bool> show-commands: false;
     callback action-pressed(action-id: string);
@@ -262,6 +265,45 @@ export component AppWindow inherits Window {
                     font-size: Typography.body;
                 }
 
+                // Game card — shown when game info is available
+                if root.game-name != "" : Rectangle {
+                    height: 160px;
+                    background: Palette.surface;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: Palette.border;
+                    clip: true;
+                    game-card-ta := TouchArea {
+                        enabled: !root.action-pending;
+                        clicked => { root.action-pressed("launch_last_game"); }
+                    }
+                    HorizontalLayout {
+                        if root.has-game-cover-art : Image {
+                            source: root.game-cover-art;
+                            width: 107px;
+                            height: parent.height;
+                            image-fit: cover;
+                        }
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 4px;
+                            alignment: center;
+                            Text {
+                                text: root.game-name;
+                                color: root.action-pending ? Palette.text-secondary : Palette.text-primary;
+                                font-size: Typography.body;
+                                overflow: elide;
+                                horizontal-stretch: 1;
+                            }
+                            Text {
+                                text: "▶  Continue";
+                                color: Palette.text-secondary;
+                                font-size: Typography.caption;
+                            }
+                        }
+                    }
+                }
+
                 HorizontalLayout {
                     spacing: 8px;
 
@@ -287,7 +329,8 @@ export component AppWindow inherits Window {
                         }
                     }
 
-                    Rectangle {
+                    // Fallback button — shown only when no game card
+                    if root.game-name == "" : Rectangle {
                         height: 48px;
                         horizontal-stretch: 1;
                         background: Palette.surface;

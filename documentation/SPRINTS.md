@@ -1,6 +1,6 @@
 # Roadmap — Sentinel
 
-> Status: **In progress** — M0, M2, and M3 complete (#49–55 done). M4 functionally complete — #56–60 done, #61 hardware blocked. M5 in progress — #62, #96, #63, #64, #123, and #65 done; #66 hardware blocked. M1 in progress — #99, #100, #101, #102, #103, and #105 done; #122 remaining. Continuous tasks: #112 done. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
+> Status: **In progress** — M0, M2, and M3 complete (#49–55 done). M4 functionally complete — #56–60 done, #61 hardware blocked. M5 complete — #62, #96, #63, #64, #123, #65, and #66 done. M1 in progress — #99, #100, #101, #102, #103, and #105 done; #122 remaining. Continuous tasks: #112 done. This is a fun personal project, so there are no deadlines or time boxes. Milestones are done when they're done; the order matters more than the pace.
 
 ## Goals of the project
 
@@ -134,7 +134,7 @@ M0 and M1 are independent and can happen in either order or side by side. Everyt
 - [x] #64 — Panel sends `Command` on button press and handles `CommandResult` ✓
 - [x] #123 — Fake-agent responds to `Command` frames with fake `CommandResult` ✓
 - [x] #65 — `SteamLibrary` locates install, last-played game, and app names ✓
-- [ ] #66 — Load cover art as `GameInfo`, display game card, and launch last-played game *(hardware blocked)*
+- [x] #66 — Load cover art as `GameInfo`, display game card, and launch last-played game ✓
 
 **Outcomes:** Tap "Steam" → Steam opens. Tap the game card (with cover art) → the last game launches.
 **Learning:** File-format parsing, binary payloads over the wire, request/response correlation, safe command execution.

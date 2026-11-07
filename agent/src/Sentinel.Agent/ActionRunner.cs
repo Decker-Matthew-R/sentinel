@@ -19,13 +19,17 @@ public class ActionRunner(
                 ErrorMessage = $"Unknown action: {command.ActionId}"
             });
 
-        var psi = new ProcessStartInfo
+        ProcessStartInfo psi;
+        if (argv[0].StartsWith("steam://", StringComparison.OrdinalIgnoreCase))
         {
-            FileName = argv[0],
-            UseShellExecute = false
-        };
-        for (var i = 1; i < argv.Length; i++)
-            psi.ArgumentList.Add(argv[i]);
+            psi = new ProcessStartInfo { FileName = argv[0], UseShellExecute = true };
+        }
+        else
+        {
+            psi = new ProcessStartInfo { FileName = argv[0], UseShellExecute = false };
+            for (var i = 1; i < argv.Length; i++)
+                psi.ArgumentList.Add(argv[i]);
+        }
 
         try
         {

@@ -3,7 +3,7 @@ using Sentinel.V1;
 
 namespace Sentinel.Agent;
 
-public class LinkClient(string host, int port, SensorPoller poller, ISpecsSource specsSource, IActionRunner actionRunner)
+public class LinkClient(string host, int port, SensorPoller poller, ISpecsSource specsSource, IActionRunner actionRunner, ISteamLibrary? steamLibrary = null)
 {
     private readonly SemaphoreSlim _writeLock = new(1, 1);
 
@@ -38,6 +38,21 @@ public class LinkClient(string host, int port, SensorPoller poller, ISpecsSource
                 OsVersion = specs.OsVersion
             }
         });
+
+        var game = steamLibrary?.GetLastPlayedGame();
+        if (game is not null)
+        {
+            await SendAsync(stream, new Envelope
+            {
+                Version = 1,
+                GameInfo = new Sentinel.V1.GameInfo
+                {
+                    AppId = game.AppId,
+                    Name = game.Name,
+                    CoverArt = Google.Protobuf.ByteString.CopyFrom(game.CoverArt)
+                }
+            });
+        }
 
         _ = ReadCommandsAsync(stream, cancellationToken);
 
