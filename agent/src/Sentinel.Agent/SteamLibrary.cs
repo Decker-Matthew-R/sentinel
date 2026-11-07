@@ -20,8 +20,7 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
             var text = File.ReadAllText(manifestPath);
             var name = ParseNameFromManifest(text);
             if (name is null) return null;
-            var type = ParseTypeFromManifest(text);
-            if (!string.Equals(type, "game", StringComparison.OrdinalIgnoreCase)) return null;
+            if (name.Contains("redistributables", StringComparison.OrdinalIgnoreCase)) return null;
             return new GameInfo(appId, name, LoadCoverArt(appId));
         }
         catch { return null; }
@@ -53,8 +52,7 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
                 var text = File.ReadAllText(manifest);
                 var name = ParseNameFromManifest(text);
                 if (name is null) continue;
-                var type = ParseTypeFromManifest(text);
-                if (!string.Equals(type, "game", StringComparison.OrdinalIgnoreCase)) continue;
+                if (name.Contains("redistributables", StringComparison.OrdinalIgnoreCase)) continue;
                 var appId = Path.GetFileNameWithoutExtension(manifest)["appmanifest_".Length..];
                 var coverArt = LoadCoverArt(appId);
                 result.Add(new GameInfo(appId, name, coverArt));
