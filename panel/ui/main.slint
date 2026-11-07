@@ -332,7 +332,13 @@ export component AppWindow inherits Window {
                         enabled: !root.action-pending;
                         clicked => { root.action-pressed("launch_game_" + card.app-id); }
                     }
-                    Rectangle {
+                    if card.has-cover-art : Image {
+                        source: card.cover-art;
+                        width: parent.width;
+                        height: parent.height;
+                        image-fit: cover;
+                    }
+                    if !card.has-cover-art : Rectangle {
                         y: parent.height - self.height;
                         width: parent.width;
                         height: 36px;
@@ -347,12 +353,6 @@ export component AppWindow inherits Window {
                             height: parent.height;
                             vertical-alignment: center;
                         }
-                    }
-                    if card.has-cover-art : Image {
-                        source: card.cover-art;
-                        width: parent.width;
-                        height: parent.height;
-                        image-fit: cover;
                     }
                 }
             }
@@ -369,7 +369,13 @@ export component AppWindow inherits Window {
                     enabled: !root.action-pending;
                     clicked => { root.action-pressed("launch_last_game"); }
                 }
-                Rectangle {
+                if root.has-game-cover-art : Image {
+                    source: root.game-cover-art;
+                    width: parent.width;
+                    height: parent.height;
+                    image-fit: cover;
+                }
+                if !root.has-game-cover-art : Rectangle {
                     y: parent.height - self.height;
                     width: parent.width;
                     height: 36px;
@@ -384,12 +390,6 @@ export component AppWindow inherits Window {
                         height: parent.height;
                         vertical-alignment: center;
                     }
-                }
-                if root.has-game-cover-art : Image {
-                    source: root.game-cover-art;
-                    width: parent.width;
-                    height: parent.height;
-                    image-fit: cover;
                 }
             }
 
