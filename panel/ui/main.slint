@@ -338,10 +338,11 @@ export component AppWindow inherits Window {
                         height: parent.height;
                         image-fit: cover;
                     }
-                    if !card.has-cover-art : Rectangle {
+                    Rectangle {
                         y: parent.height - self.height;
                         width: parent.width;
                         height: 36px;
+                        visible: !card.has-cover-art;
                         background: @linear-gradient(180deg, transparent, #000000cc);
                         Text {
                             text: card.name;
@@ -375,10 +376,11 @@ export component AppWindow inherits Window {
                     height: parent.height;
                     image-fit: cover;
                 }
-                if !root.has-game-cover-art : Rectangle {
+                Rectangle {
                     y: parent.height - self.height;
                     width: parent.width;
                     height: 36px;
+                    visible: !root.has-game-cover-art;
                     background: @linear-gradient(180deg, transparent, #000000cc);
                     Text {
                         text: root.game-name;
