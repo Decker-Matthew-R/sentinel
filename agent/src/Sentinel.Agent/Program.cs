@@ -2,6 +2,11 @@ using System.Net.NetworkInformation;
 using LibreHardwareMonitor.Hardware;
 using Sentinel.Agent;
 
+var log = new StreamWriter(@"C:\sentinel\sentinel-agent.log", append: true) { AutoFlush = true };
+Console.SetOut(log);
+Console.SetError(log);
+Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Sentinel Agent 0.2.0 starting");
+
 var computer = new Computer
 {
     IsCpuEnabled = true,
@@ -10,6 +15,7 @@ var computer = new Computer
     IsMotherboardEnabled = true,
 };
 computer.Open();
+Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Hardware monitor opened");
 
 var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>
@@ -25,13 +31,27 @@ var actionRunner = new ActionRunner(new Dictionary<string, string[]>
     ["launch_steam"] = [@"C:\Program Files (x86)\Steam\steam.exe"],
 });
 var poller = new SensorPoller(sensorSource);
-var host = args.Length > 0 ? args[0] : FindTabletHost() ?? throw new InvalidOperationException(
-    "Could not find tablet: no RNDIS adapter with a gateway address. " +
-    "Enable USB tethering on the tablet, or pass the IP as an argument.");
+
+string host;
+if (args.Length > 0)
+{
+    host = args[0];
+    Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Using host from argument: {host}");
+}
+else
+{
+    host = FindTabletHost() ?? throw new InvalidOperationException(
+        "Could not find tablet: no RNDIS adapter with a gateway address. " +
+        "Enable USB tethering on the tablet, or pass the IP as an argument.");
+    Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Tablet discovered at {host}");
+}
+
 var client = new LinkClient(host, 9000, poller, specsSource, actionRunner);
+Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Connecting to {host}:9000");
 
 await client.RunWithReconnectAsync(cts.Token);
 
+Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Sentinel Agent stopped");
 computer.Close();
 
 static string? FindTabletHost() =>

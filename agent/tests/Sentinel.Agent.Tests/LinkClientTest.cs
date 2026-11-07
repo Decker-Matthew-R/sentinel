@@ -27,7 +27,7 @@ public class LinkClientTest
 
         var hello = await FrameReader.ReadAsync(stream);
         Assert.Equal(Envelope.PayloadOneofCase.Hello, hello.PayloadCase);
-        Assert.Equal("0.1.0", hello.Hello.AgentVersion);
+        Assert.Equal("0.2.0", hello.Hello.AgentVersion);
 
         var specsEnvelope = await FrameReader.ReadAsync(stream);
         Assert.Equal(Envelope.PayloadOneofCase.Specs, specsEnvelope.PayloadCase);

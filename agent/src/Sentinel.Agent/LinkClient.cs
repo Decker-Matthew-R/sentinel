@@ -17,7 +17,7 @@ public class LinkClient(string host, int port, SensorPoller poller, ISpecsSource
         await SendAsync(stream, new Envelope
         {
             Version = 1,
-            Hello = new Hello { AgentVersion = "0.1.0" }
+            Hello = new Hello { AgentVersion = "0.2.0" }
         });
 
         var specs = specsSource.Read();
