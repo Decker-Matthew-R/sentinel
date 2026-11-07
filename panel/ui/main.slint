@@ -316,12 +316,12 @@ export component AppWindow inherits Window {
             if root.game-library.length > 0 : Flickable {
                 vertical-stretch: 1;
                 interactive: true;
-                content-height: max(self.height, ((root.game-library.length + 5) / 6) * ((self.width - 40px) / 6 * 3 / 2 + 8px));
+                content-height: max(self.height, floor((root.game-library.length + 5) / 6) * ((self.width - 40px) / 6 * 3 / 2 + 8px));
 
                 for card[i] in root.game-library : Rectangle {
                     private property <length> cw: (parent.width - 40px) / 6;
                     x: mod(i, 6) * (cw + 8px);
-                    y: (i / 6) * (cw * 3 / 2 + 8px);
+                    y: floor(i / 6) * (cw * 3 / 2 + 8px);
                     width: cw;
                     height: cw * 3 / 2;
                     border-radius: 6px;
