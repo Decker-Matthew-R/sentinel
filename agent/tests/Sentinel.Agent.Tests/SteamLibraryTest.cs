@@ -111,6 +111,163 @@ public class SteamLibraryTest
         Assert.Null(appId);
     }
 
+    [Fact]
+    public void LoadCoverArt_returns_bytes_when_flat_library_600x900_exists()
+    {
+        var steamPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            var cacheDir = Path.Combine(steamPath, "appcache", "librarycache", "934700");
+            Directory.CreateDirectory(cacheDir);
+            var imageBytes = new byte[] { 0xFF, 0xD8, 0xFF };
+            File.WriteAllBytes(Path.Combine(cacheDir, "library_600x900.jpg"), imageBytes);
+
+            var steamappsDir = Path.Combine(steamPath, "steamapps");
+            Directory.CreateDirectory(steamappsDir);
+            File.WriteAllText(Path.Combine(steamappsDir, "appmanifest_934700.acf"), """
+                "AppState"
+                {
+                    "appid" "934700"
+                    "name" "Dead Island 2"
+                }
+                """);
+
+            var games = new SteamLibrary(steamPath).GetInstalledGames().ToList();
+
+            Assert.Single(games);
+            Assert.Equal(imageBytes, games[0].CoverArt);
+        }
+        finally
+        {
+            Directory.Delete(steamPath, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void LoadCoverArt_returns_bytes_when_library_600x900_in_hash_subdir_exists()
+    {
+        var steamPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            var hashDir = Path.Combine(steamPath, "appcache", "librarycache", "552520", "abc123");
+            Directory.CreateDirectory(hashDir);
+            var imageBytes = new byte[] { 0xFF, 0xD8, 0xFF };
+            File.WriteAllBytes(Path.Combine(hashDir, "library_600x900.jpg"), imageBytes);
+
+            var steamappsDir = Path.Combine(steamPath, "steamapps");
+            Directory.CreateDirectory(steamappsDir);
+            File.WriteAllText(Path.Combine(steamappsDir, "appmanifest_552520.acf"), """
+                "AppState"
+                {
+                    "appid" "552520"
+                    "name" "Far Cry 5"
+                }
+                """);
+
+            var games = new SteamLibrary(steamPath).GetInstalledGames().ToList();
+
+            Assert.Single(games);
+            Assert.Equal(imageBytes, games[0].CoverArt);
+        }
+        finally
+        {
+            Directory.Delete(steamPath, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ParseTypeFromManifest_returns_type_from_appmanifest()
+    {
+        var vdf = """
+            "AppState"
+            {
+                "appid" "228980"
+                "name" "Steamworks Common Redistributables"
+                "type" "Tool"
+            }
+            """;
+        Assert.Equal("Tool", SteamLibrary.ParseTypeFromManifest(vdf));
+    }
+
+    [Fact]
+    public void ParseTypeFromManifest_returns_null_when_type_key_missing()
+    {
+        var vdf = """
+            "AppState"
+            {
+                "appid" "570"
+                "name" "Dota 2"
+            }
+            """;
+        Assert.Null(SteamLibrary.ParseTypeFromManifest(vdf));
+    }
+
+    [Fact]
+    public void GetInstalledGames_excludes_entries_with_redistributables_in_name()
+    {
+        var steamPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            var steamappsDir = Path.Combine(steamPath, "steamapps");
+            Directory.CreateDirectory(steamappsDir);
+            File.WriteAllText(Path.Combine(steamappsDir, "appmanifest_570.acf"), """
+                "AppState"
+                {
+                    "appid" "570"
+                    "name" "Dota 2"
+                }
+                """);
+            File.WriteAllText(Path.Combine(steamappsDir, "appmanifest_228980.acf"), """
+                "AppState"
+                {
+                    "appid" "228980"
+                    "name" "Steamworks Common Redistributables"
+                }
+                """);
+
+            var games = new SteamLibrary(steamPath).GetInstalledGames().ToList();
+
+            Assert.Single(games);
+            Assert.Equal("Dota 2", games[0].Name);
+        }
+        finally
+        {
+            Directory.Delete(steamPath, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void LoadCoverArt_falls_back_to_library_capsule_when_library_600x900_absent()
+    {
+        var steamPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            var hashDir = Path.Combine(steamPath, "appcache", "librarycache", "552520", "abc123");
+            Directory.CreateDirectory(hashDir);
+            var imageBytes = new byte[] { 0xFF, 0xD8, 0xFF };
+            File.WriteAllBytes(Path.Combine(hashDir, "library_capsule.jpg"), imageBytes);
+
+            var steamappsDir = Path.Combine(steamPath, "steamapps");
+            Directory.CreateDirectory(steamappsDir);
+            File.WriteAllText(Path.Combine(steamappsDir, "appmanifest_552520.acf"), """
+                "AppState"
+                {
+                    "appid" "552520"
+                    "name" "Far Cry 5"
+                }
+                """);
+
+            var games = new SteamLibrary(steamPath).GetInstalledGames().ToList();
+
+            Assert.Single(games);
+            Assert.Equal(imageBytes, games[0].CoverArt);
+        }
+        finally
+        {
+            Directory.Delete(steamPath, recursive: true);
+        }
+    }
+
     [Fact(Skip = "Requires Windows with Steam installed — run manually on the target PC")]
     [SupportedOSPlatform("windows")]
     public void SteamLibrary_finds_real_last_played_game()

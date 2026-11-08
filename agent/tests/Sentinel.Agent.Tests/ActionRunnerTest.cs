@@ -58,6 +58,21 @@ public class ActionRunnerTest
     }
 
     [Fact]
+    public async Task ExecuteAsync_steam_uri_uses_shell_execute()
+    {
+        ProcessStartInfo? captured = null;
+        var actions = new Dictionary<string, string[]> { ["launch_last_game"] = ["steam://rungameid/570"] };
+        var runner = new ActionRunner(actions, psi => { captured = psi; return null; });
+
+        await runner.ExecuteAsync(new Command { RequestId = "6", ActionId = "launch_last_game" });
+
+        Assert.NotNull(captured);
+        Assert.True(captured!.UseShellExecute);
+        Assert.Equal("steam://rungameid/570", captured.FileName);
+        Assert.Empty(captured.ArgumentList);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_similar_id_with_trailing_space_does_not_match()
     {
         var launched = false;

@@ -13,7 +13,19 @@ message Envelope {
     Specs specs = 5;
     Command command = 6;
     CommandResult command_result = 7;
+    GameInfo game_info = 8;
+    GameLibrary game_library = 9;
   }
+}
+
+message GameLibrary {
+  repeated GameInfo games = 1;
+}
+
+message GameInfo {
+  string app_id = 1;
+  string name = 2;
+  bytes cover_art = 3;
 }
 
 message Hello {

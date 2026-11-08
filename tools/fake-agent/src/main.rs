@@ -8,8 +8,8 @@ mod proto {
 
 use prost::Message;
 use proto::sentinel::v1::{
-    envelope, CommandResult, CpuMetrics, Envelope, GpuMetrics, Hello, MetricsSnapshot, RamMetrics,
-    Specs,
+    CommandResult, CpuMetrics, Envelope, GameInfo, GameLibrary, GpuMetrics, Hello, MetricsSnapshot,
+    RamMetrics, Specs, envelope,
 };
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -182,6 +182,71 @@ pub async fn run(addr: &str) -> Result<(), std::io::Error> {
     )
     .await?;
 
+    write_frame(
+        &mut stream,
+        &Envelope {
+            version: 1,
+            payload: Some(envelope::Payload::GameInfo(GameInfo {
+                app_id: "570".into(),
+                name: "Dota 2".into(),
+                cover_art: vec![],
+            })),
+        },
+    )
+    .await?;
+
+    write_frame(
+        &mut stream,
+        &Envelope {
+            version: 1,
+            payload: Some(envelope::Payload::GameLibrary(GameLibrary {
+                games: vec![
+                    GameInfo {
+                        app_id: "570".into(),
+                        name: "Dota 2".into(),
+                        cover_art: vec![],
+                    },
+                    GameInfo {
+                        app_id: "730".into(),
+                        name: "Counter-Strike 2".into(),
+                        cover_art: vec![],
+                    },
+                    GameInfo {
+                        app_id: "440".into(),
+                        name: "Team Fortress 2".into(),
+                        cover_art: vec![],
+                    },
+                    GameInfo {
+                        app_id: "271590".into(),
+                        name: "Grand Theft Auto V".into(),
+                        cover_art: vec![],
+                    },
+                    GameInfo {
+                        app_id: "1174180".into(),
+                        name: "Red Dead Redemption 2".into(),
+                        cover_art: vec![],
+                    },
+                    GameInfo {
+                        app_id: "292030".into(),
+                        name: "The Witcher 3: Wild Hunt".into(),
+                        cover_art: vec![],
+                    },
+                    GameInfo {
+                        app_id: "1091500".into(),
+                        name: "Cyberpunk 2077".into(),
+                        cover_art: vec![],
+                    },
+                    GameInfo {
+                        app_id: "49520".into(),
+                        name: "Borderlands 2".into(),
+                        cover_art: vec![],
+                    },
+                ],
+            })),
+        },
+    )
+    .await?;
+
     println!("Connected. Streaming metrics...");
 
     let (mut read_half, mut write_half) = stream.into_split();
@@ -330,7 +395,7 @@ mod tests {
 
         let (mut stream, _) = listener.accept().await.unwrap();
 
-        // Hello → Specs → MetricsSnapshot
+        // Hello → Specs → GameInfo → GameLibrary → MetricsSnapshot
         let first = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
             .await
             .expect("Hello not received");
@@ -343,11 +408,57 @@ mod tests {
 
         let third = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
             .await
-            .expect("MetricsSnapshot not received");
+            .expect("GameInfo not received");
         assert!(matches!(
             third.payload,
+            Some(envelope::Payload::GameInfo(_))
+        ));
+
+        let fourth = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
+            .await
+            .expect("GameLibrary not received");
+        assert!(matches!(
+            fourth.payload,
+            Some(envelope::Payload::GameLibrary(_))
+        ));
+
+        let fifth = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
+            .await
+            .expect("MetricsSnapshot not received");
+        assert!(matches!(
+            fifth.payload,
             Some(envelope::Payload::MetricsSnapshot(_))
         ));
+    }
+
+    #[tokio::test]
+    async fn fake_agent_sends_game_info_after_specs() {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+
+        tokio::spawn(async move { run(&format!("127.0.0.1:{port}")).await.ok() });
+
+        let (mut stream, _) = listener.accept().await.unwrap();
+
+        let _hello = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
+            .await
+            .expect("Hello not received");
+        let _specs = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
+            .await
+            .expect("Specs not received");
+
+        let game_info_envelope =
+            tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
+                .await
+                .expect("GameInfo not received");
+
+        match game_info_envelope.payload {
+            Some(envelope::Payload::GameInfo(g)) => {
+                assert!(!g.app_id.is_empty());
+                assert!(!g.name.is_empty());
+            }
+            other => panic!("expected GameInfo payload, got {other:?}"),
+        }
     }
 
     #[tokio::test]
@@ -409,13 +520,20 @@ mod tests {
 
         let (mut stream, _) = listener.accept().await.unwrap();
 
-        // Skip Hello and Specs
+        // Skip Hello, Specs, GameInfo, GameLibrary
         let _hello = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
             .await
             .expect("Hello not received");
         let _specs = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
             .await
             .expect("Specs not received");
+        let _game_info = tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
+            .await
+            .expect("GameInfo not received");
+        let _game_library =
+            tokio::time::timeout(Duration::from_secs(2), read_frame_raw(&mut stream))
+                .await
+                .expect("GameLibrary not received");
 
         // Send a Command
         let request_id = "test-req-42".to_string();

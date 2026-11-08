@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net.NetworkInformation;
 using LibreHardwareMonitor.Hardware;
 using Sentinel.Agent;
@@ -26,11 +27,34 @@ Console.CancelKeyPress += (_, e) =>
 
 var sensorSource = new LibreHardwareMonitorSource(computer);
 var specsSource = new WindowsSpecsSource(computer);
-var actionRunner = new ActionRunner(new Dictionary<string, string[]>
+var poller = new SensorPoller(sensorSource);
+
+var actions = new Dictionary<string, string[]>
 {
     ["launch_steam"] = [@"C:\Program Files (x86)\Steam\steam.exe"],
-});
-var poller = new SensorPoller(sensorSource);
+};
+
+ISteamLibrary? steamLibrary = null;
+if (OperatingSystem.IsWindows())
+{
+    var steamPath = SteamLibrary.FindSteamPath();
+    if (steamPath is not null)
+    {
+        steamLibrary = new SteamLibrary(steamPath);
+        var game = steamLibrary.GetLastPlayedGame();
+        if (game is not null)
+        {
+            actions["launch_last_game"] = [$"steam://rungameid/{game.AppId}"];
+            Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Last played game: {game.Name} ({game.AppId})");
+        }
+        var installed = steamLibrary.GetInstalledGames().ToList();
+        foreach (var g in installed)
+            actions[$"launch_game_{g.AppId}"] = [$"steam://rungameid/{g.AppId}"];
+        Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Registered {installed.Count} installed games");
+    }
+}
+
+var actionRunner = new ActionRunner(actions);
 
 string host;
 if (args.Length > 0)
@@ -46,7 +70,7 @@ else
     Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Tablet discovered at {host}");
 }
 
-var client = new LinkClient(host, 9000, poller, specsSource, actionRunner);
+var client = new LinkClient(host, 9000, poller, specsSource, actionRunner, steamLibrary);
 Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Connecting to {host}:9000");
 
 await client.RunWithReconnectAsync(cts.Token);

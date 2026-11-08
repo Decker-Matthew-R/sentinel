@@ -13,8 +13,53 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
     {
         var appId = FindLastPlayedAppId();
         if (appId is null) return null;
-        var name = FindAppName(appId);
-        return name is null ? null : new GameInfo(appId, name);
+        var manifestPath = Path.Combine(steamPath, "steamapps", $"appmanifest_{appId}.acf");
+        if (!File.Exists(manifestPath)) return null;
+        try
+        {
+            var text = File.ReadAllText(manifestPath);
+            var name = ParseNameFromManifest(text);
+            if (name is null) return null;
+            if (name.Contains("redistributables", StringComparison.OrdinalIgnoreCase)) return null;
+            return new GameInfo(appId, name, LoadCoverArt(appId));
+        }
+        catch { return null; }
+    }
+
+    private byte[] LoadCoverArt(string appId)
+    {
+        var dir = Path.Combine(steamPath, "appcache", "librarycache", appId);
+        if (!Directory.Exists(dir)) return [];
+        try
+        {
+            var files = Directory.GetFiles(dir, "library_600x900.jpg", SearchOption.AllDirectories);
+            if (files.Length == 0)
+                files = Directory.GetFiles(dir, "library_capsule.jpg", SearchOption.AllDirectories);
+            return files.Length > 0 ? File.ReadAllBytes(files[0]) : [];
+        }
+        catch { return []; }
+    }
+
+    public IEnumerable<GameInfo> GetInstalledGames()
+    {
+        var steamappsPath = Path.Combine(steamPath, "steamapps");
+        if (!Directory.Exists(steamappsPath)) return [];
+        var result = new List<GameInfo>();
+        foreach (var manifest in Directory.GetFiles(steamappsPath, "appmanifest_*.acf"))
+        {
+            try
+            {
+                var text = File.ReadAllText(manifest);
+                var name = ParseNameFromManifest(text);
+                if (name is null) continue;
+                if (name.Contains("redistributables", StringComparison.OrdinalIgnoreCase)) continue;
+                var appId = Path.GetFileNameWithoutExtension(manifest)["appmanifest_".Length..];
+                var coverArt = LoadCoverArt(appId);
+                result.Add(new GameInfo(appId, name, coverArt));
+            }
+            catch { }
+        }
+        return result;
     }
 
     private string? FindLastPlayedAppId()
@@ -42,17 +87,6 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
         }
 
         return bestAppId;
-    }
-
-    private string? FindAppName(string appId)
-    {
-        var manifestPath = Path.Combine(steamPath, "steamapps", $"appmanifest_{appId}.acf");
-        if (!File.Exists(manifestPath)) return null;
-        try
-        {
-            return ParseNameFromManifest(File.ReadAllText(manifestPath));
-        }
-        catch { return null; }
     }
 
     public static (string? AppId, long Timestamp) ParseLastPlayedFromLocalConfig(string content)
@@ -94,6 +128,18 @@ public class SteamLibrary(string steamPath) : ISteamLibrary
             if (VdfParser.Parse(content) is not VdfMap root) return null;
             return root.Children.TryGetValue("name", out var nameNode) && nameNode is VdfString nameStr
                 ? nameStr.Value
+                : null;
+        }
+        catch { return null; }
+    }
+
+    public static string? ParseTypeFromManifest(string content)
+    {
+        try
+        {
+            if (VdfParser.Parse(content) is not VdfMap root) return null;
+            return root.Children.TryGetValue("type", out var typeNode) && typeNode is VdfString typeStr
+                ? typeStr.Value
                 : null;
         }
         catch { return null; }

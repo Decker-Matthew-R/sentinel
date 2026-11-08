@@ -3,6 +3,13 @@ import { MetricTile, TileState } from "tile.slint";
 
 export enum ConnectionStatus { waiting, connected, stale }
 
+export struct GameCardData {
+    app-id: string,
+    name: string,
+    cover-art: image,
+    has-cover-art: bool,
+}
+
 export component AppWindow inherits Window {
     title: "Sentinel";
     preferred-width: 1280px;
@@ -63,6 +70,10 @@ export component AppWindow inherits Window {
     in property <string> ram-total: "";
     in property <string> ram-speed: "";
     in property <string> os-version: "";
+    in property <string> game-name: "";
+    in property <image> game-cover-art;
+    in property <bool> has-game-cover-art: false;
+    in property <[GameCardData]> game-library: [];
     in-out property <bool> show-specs: false;
     in-out property <bool> show-commands: false;
     callback action-pressed(action-id: string);
@@ -249,64 +260,32 @@ export component AppWindow inherits Window {
         if root.show-commands : VerticalLayout {
             vertical-stretch: 1;
             padding: 16px;
-            spacing: 16px;
-            alignment: start;
+            spacing: 12px;
 
-            VerticalLayout {
+            // Steam button + inline action feedback
+            HorizontalLayout {
                 spacing: 12px;
                 alignment: start;
 
-                Text {
-                    text: "Steam";
-                    color: Palette.text-secondary;
-                    font-size: Typography.body;
-                }
-
-                HorizontalLayout {
-                    spacing: 8px;
-
-                    Rectangle {
-                        height: 48px;
-                        horizontal-stretch: 1;
-                        background: Palette.surface;
-                        border-radius: 8px;
-                        border-width: 1px;
-                        border-color: Palette.border;
-                        steam-ta := TouchArea {
-                            enabled: !root.action-pending;
-                            clicked => { root.action-pressed("launch_steam"); }
-                        }
-                        Text {
-                            text: "Launch Steam";
-                            color: root.action-pending ? Palette.text-secondary : Palette.text-primary;
-                            font-size: Typography.body;
-                            width: parent.width;
-                            height: parent.height;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
+                Rectangle {
+                    height: 44px;
+                    width: 160px;
+                    background: Palette.surface;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: Palette.border;
+                    steam-ta := TouchArea {
+                        enabled: !root.action-pending;
+                        clicked => { root.action-pressed("launch_steam"); }
                     }
-
-                    Rectangle {
-                        height: 48px;
-                        horizontal-stretch: 1;
-                        background: Palette.surface;
-                        border-radius: 8px;
-                        border-width: 1px;
-                        border-color: Palette.border;
-                        game-ta := TouchArea {
-                            enabled: !root.action-pending;
-                            clicked => { root.action-pressed("launch_last_game"); }
-                        }
-                        Text {
-                            text: "Last Game";
-                            color: root.action-pending ? Palette.text-secondary : Palette.text-primary;
-                            font-size: Typography.body;
-                            width: parent.width;
-                            height: parent.height;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
+                    Text {
+                        text: "Launch Steam";
+                        color: root.action-pending ? Palette.text-secondary : Palette.text-primary;
+                        font-size: Typography.body;
+                        width: parent.width;
+                        height: parent.height;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
                     }
                 }
 
@@ -314,18 +293,125 @@ export component AppWindow inherits Window {
                     text: "Sending...";
                     color: Palette.text-secondary;
                     font-size: Typography.caption;
+                    height: 44px;
+                    vertical-alignment: center;
                 }
-
                 if !root.action-pending && root.action-result == "ok" : Text {
                     text: "✓ Done";
                     color: Palette.success;
                     font-size: Typography.caption;
+                    height: 44px;
+                    vertical-alignment: center;
                 }
-
                 if root.has-action-error : Text {
                     text: root.action-result;
                     color: Palette.error;
                     font-size: Typography.caption;
+                    height: 44px;
+                    vertical-alignment: center;
+                }
+            }
+
+            // Game library grid (6-per-row portrait cards)
+            if root.game-library.length > 0 : Flickable {
+                vertical-stretch: 1;
+                interactive: true;
+                content-height: max(self.height, floor((root.game-library.length + 5) / 6) * ((self.width - 40px) / 6 * 3 / 2 + 8px));
+
+                for card[i] in root.game-library : Rectangle {
+                    private property <length> cw: (parent.width - 40px) / 6;
+                    x: mod(i, 6) * (cw + 8px);
+                    y: floor(i / 6) * (cw * 3 / 2 + 8px);
+                    width: cw;
+                    height: cw * 3 / 2;
+                    border-radius: 6px;
+                    clip: true;
+                    background: Palette.surface;
+
+                    card-ta := TouchArea {
+                        enabled: !root.action-pending;
+                        clicked => { root.action-pressed("launch_game_" + card.app-id); }
+                    }
+                    if card.has-cover-art : Image {
+                        source: card.cover-art;
+                        width: parent.width;
+                        height: parent.height;
+                        image-fit: cover;
+                    }
+                    if !card.has-cover-art : Rectangle {
+                        y: parent.height - self.height;
+                        width: parent.width;
+                        height: 36px;
+                        background: @linear-gradient(180deg, transparent, #000000cc);
+                        Text {
+                            text: card.name;
+                            color: #ffffff;
+                            font-size: Typography.caption;
+                            overflow: elide;
+                            x: 4px;
+                            width: parent.width - 8px;
+                            height: parent.height;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // Fallback: last-played single card when no library data yet
+            if root.game-library.length == 0 && root.game-name != "" : Rectangle {
+                private property <length> card-w: (parent.width - 5 * 8px) / 6;
+                width: card-w;
+                height: card-w * 3 / 2;
+                border-radius: 6px;
+                clip: true;
+                background: Palette.surface;
+                game-card-ta := TouchArea {
+                    enabled: !root.action-pending;
+                    clicked => { root.action-pressed("launch_last_game"); }
+                }
+                if root.has-game-cover-art : Image {
+                    source: root.game-cover-art;
+                    width: parent.width;
+                    height: parent.height;
+                    image-fit: cover;
+                }
+                if !root.has-game-cover-art : Rectangle {
+                    y: parent.height - self.height;
+                    width: parent.width;
+                    height: 36px;
+                    background: @linear-gradient(180deg, transparent, #000000cc);
+                    Text {
+                        text: root.game-name;
+                        color: #ffffff;
+                        font-size: Typography.caption;
+                        overflow: elide;
+                        x: 6px;
+                        width: parent.width - 12px;
+                        height: parent.height;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Fallback button when no library and no game-name
+            if root.game-library.length == 0 && root.game-name == "" : Rectangle {
+                height: 48px;
+                background: Palette.surface;
+                border-radius: 8px;
+                border-width: 1px;
+                border-color: Palette.border;
+                last-game-ta := TouchArea {
+                    enabled: !root.action-pending;
+                    clicked => { root.action-pressed("launch_last_game"); }
+                }
+                Text {
+                    text: "Last Game";
+                    color: root.action-pending ? Palette.text-secondary : Palette.text-primary;
+                    font-size: Typography.body;
+                    width: parent.width;
+                    height: parent.height;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
                 }
             }
         }

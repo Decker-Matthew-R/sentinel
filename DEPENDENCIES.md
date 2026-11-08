@@ -20,6 +20,7 @@
 | `tokio` | 1.54.1 | `sentinel-panel`, `fake-agent` | Async runtime — TCP networking, async I/O traits used by the framing layer and LinkServer; `sync` primitives (`mpsc`, `oneshot`, `watch`) used for the command pipeline and state propagation | MIT |
 | `prost-build` | 0.13.5 | `sentinel-panel` (build), `fake-agent` (build) | Compiles `sentinel.proto` into Rust structs at `cargo build` time. Requires system `protoc` | Apache 2.0 |
 | `slint` | 1.18.1 | `sentinel-panel` | UI framework for the panel's fullscreen dashboard | GPL v3 |
+| `image` | 0.25 | `sentinel-panel` | Decodes JPEG cover art bytes (received in `GameInfo` frames) into raw RGB pixels for display in the Slint UI | MIT / Apache 2.0 |
 | `jni` | 0.21 | `sentinel-panel` (Android target only) | JNI bindings for calling Android Java APIs from Rust — used to request immersive mode (hide system bars) in the Android entry point | MIT / Apache 2.0 |
 | `slint-build` | 1.18.1 | `sentinel-panel` (build) | Compiles `.slint` UI files into Rust code at build time | GPL v3 |
 | `i-slint-backend-testing` | 1.18 | `sentinel-panel` (dev) | Headless Slint backend for UI component tests; lets `AppWindow` be created and asserted against without a display | GPL v3 |
