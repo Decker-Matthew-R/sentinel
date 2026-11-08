@@ -84,7 +84,7 @@ flowchart LR
 | `SensorPoller` | Polls `ISensorSource` roughly once per second and produces `MetricsSnapshot` |
 | `ISpecsSource` | Interface over static hardware info; `FakeSpecsSource` is the always-available dev/test implementation; `WindowsSpecsSource` is the real one (M3 #54) |
 | `VdfParser` | Parses VDF/KeyValues text into a `VdfNode` tree (`VdfString` / `VdfMap`); used by `SteamLibrary` to read `.acf` and `.vdf` files |
-| `ISteamLibrary` | Interface over Steam library access; `FakeSteamLibrary` is the dev/test implementation; `SteamLibrary` is the real one (M5 #65) — reads the registry for install path, `localconfig.vdf` for last played, and `appmanifest_*.acf` for names; cover art loading is #66 |
+| `ISteamLibrary` | Interface over Steam library access; `FakeSteamLibrary` is the dev/test implementation; `SteamLibrary` is the real one — reads the registry for install path, `localconfig.vdf` for last played, `appmanifest_*.acf` for names and cover art; cover art is located via two-pass search (`library_600x900.jpg` then `library_capsule.jpg`) across both flat and hash-subdir cache layouts; entries whose name contains "redistributables" are excluded |
 | `ActionRunner` | Maps an **action ID** to a predefined command. Never executes arbitrary input |
 | `LinkClient` | Connects to the tablet, performs the handshake, streams data, retries with backoff |
 | Tray icon | Status (connected / disconnected), quit, open logs |
